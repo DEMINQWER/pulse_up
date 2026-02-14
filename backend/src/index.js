@@ -36,10 +36,32 @@ app.use('/admin', require('./routes/admin'));
 app.use('/friends', require('./routes/friends'));
 app.use('/users', require('./routes/users'));
 
-/* =================== */
+/* =========================
+   ROOT CHECK (ВАЖНО)
+========================= */
 
-initDB().then(() => {
-  app.listen(process.env.PORT || 5000, () => {
-    console.log('Server started');
-  });
+app.get('/', (req, res) => {
+  res.status(200).json({ status: "API is working" });
 });
+
+/* =========================
+   GLOBAL ERROR HANDLER
+========================= */
+
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
+/* ========================= */
+
+initDB()
+  .then(() => {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server started on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("DB INIT ERROR:", err);
+  });
