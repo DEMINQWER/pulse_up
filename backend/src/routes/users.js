@@ -32,6 +32,21 @@ router.get('/me', async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    /* =========================
+       FIX AVATAR FULL URL
+    ========================= */
+
+    if (user.avatar) {
+      const BASE_URL =
+        process.env.BASE_URL ||
+        "https://pulse-9ui4.onrender.com";
+
+      // если уже полный URL — не трогаем
+      if (!user.avatar.startsWith("http")) {
+        user.avatar = `${BASE_URL}${user.avatar}`;
+      }
+    }
+
     res.json(user);
 
   } catch (error) {
