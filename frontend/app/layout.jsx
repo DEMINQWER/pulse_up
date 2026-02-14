@@ -1,18 +1,23 @@
-import "../styles/globals.css";
-import SidebarProvider from "@/components/SidebarProvider";
+"use client";
 
-export const metadata = {
-  title: "PULSE",
-  description: "Next generation messenger",
-};
+import { useEffect } from "react";
+import Sidebar from "@/components/Sidebar";
+import "./globals.css";
 
 export default function RootLayout({ children }) {
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") || "default";
+    document.documentElement.setAttribute("data-theme", savedTheme);
+  }, []);
+
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html>
       <body>
-        <SidebarProvider>
-          {children}
-        </SidebarProvider>
+        <div className="app">
+          <Sidebar />
+          <main className="content">{children}</main>
+        </div>
       </body>
     </html>
   );

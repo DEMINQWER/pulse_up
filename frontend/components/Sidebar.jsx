@@ -1,45 +1,36 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-export default function Sidebar({ open, setOpen }) {
-  const router = useRouter();
-
-  const navigate = (path) => {
-    router.push(path);
-    setOpen(false);
-  };
+export default function Sidebar() {
+  const pathname = usePathname();
 
   return (
-    <>
-      {/* Overlay */}
-      <div
-        className={`sidebar-overlay ${open ? "active" : ""}`}
-        onClick={() => setOpen(false)}
-      />
+    <div className="sidebar">
+      <div className="menu">
+        <Link className={pathname === "/" ? "active" : ""} href="/">
+          Лента
+        </Link>
 
-      {/* Sidebar */}
-      <div className={`sidebar ${open ? "active" : ""}`}>
-        <button onClick={() => navigate("/")}>
-          📰 Лента
-        </button>
+        <Link className={pathname.startsWith("/chats") ? "active" : ""} href="/chats">
+          Чаты
+        </Link>
 
-        <button onClick={() => navigate("/chats")}>
-          💬 Чаты
-        </button>
+        <Link className={pathname.startsWith("/friends") ? "active" : ""} href="/friends">
+          Друзья
+        </Link>
 
-        <button onClick={() => navigate("/profile")}>
-          👤 Профиль
-        </button>
-
-        <button onClick={() => navigate("/settings")}>
-          ⚙ Настройки
-        </button>
-
-        <button onClick={() => router.push("/friends")}>
-  👥 Друзья
-</button>
+        <Link className={pathname.startsWith("/profile") ? "active" : ""} href="/profile">
+          Профиль
+        </Link>
       </div>
-    </>
+
+      <div className="settings">
+        <Link className={pathname.startsWith("/settings") ? "active" : ""} href="/settings">
+          Настройки
+        </Link>
+      </div>
+    </div>
   );
 }
