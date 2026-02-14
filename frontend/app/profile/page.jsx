@@ -1,23 +1,46 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
 export default function Profile({ userId }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
+  // Получаем токен из localStorage
   useEffect(() => {
+    const stored = localStorage.getItem("token");
+    if (!stored) return;
+
+    setToken(stored);
+
+    try {
+      const payload = JSON.parse(atob(stored.split(".")[1]));
+      setCurrentUserId(payload.id);
+    } catch (err) {
+      console.error("Invalid token");
+    }
+  }, []);
+
+  // Загружаем пользователя только если есть token и userId
+  useEffect(() => {
+    if (!token || !userId) return;
+
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
-      .then(setUser);
-  }, [userId]);
+      .then(setUser)
+      .catch(err => console.error(err));
+  }, [token, userId]);
 
-  if (!user) return null;
+  if (!user) return <div>Loading...</div>;
 
-  const isOwner = userId === JSON.parse(atob(token.split(".")[1])).id;
+  const isOwner = currentUserId === userId;
 
   const startChat = async () => {
+    if (!token) return;
+
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/chats/start`,
       {
@@ -29,6 +52,7 @@ export default function Profile({ userId }) {
         body: JSON.stringify({ userId })
       }
     );
+
     const data = await res.json();
     window.location.href = `/chats/${data.chatId}`;
   };
@@ -38,6 +62,7 @@ export default function Profile({ userId }) {
       <div className="avatar-wrapper">
         <img
           src={user.avatar_url || "/default-avatar.png"}
+          alt="avatar"
         />
         {isOwner && <div className="avatar-edit">✏️</div>}
       </div>
