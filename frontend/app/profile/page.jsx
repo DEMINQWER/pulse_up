@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 export default function Profile({ userId }) {
   const [user, setUser] = useState(null);
-  const token = localStorage.getItem("token");
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
