@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export default API_URL;
 
@@ -9,8 +9,15 @@ export async function apiRequest(
   token = null
 ) {
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      method: method,
+    if (!API_URL) {
+      throw new Error("NEXT_PUBLIC_API_URL is not defined");
+    }
+
+    // Гарантируем правильный слэш
+    const url = `${API_URL}${endpoint.startsWith("/") ? endpoint : "/" + endpoint}`;
+
+    const response = await fetch(url, {
+      method,
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -18,15 +25,18 @@ export async function apiRequest(
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
 
-    const data = await response.json();
+    // Проверяем, есть ли тело ответа
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
       throw new Error(data.error || "API Error");
     }
 
     return data;
+
   } catch (error) {
-    console.error("API ERROR:", error);
+    console.error("API ERROR:", error.message);
     throw error;
   }
 }
