@@ -35,7 +35,7 @@ router.post("/add", auth, async (req, res) => {
 // список друзей
 router.get("/", auth, async (req, res) => {
   const result = await pool.query(`
-    SELECT u.id, u.username, u.nickname, u.avatar_url
+    SELECT u.id, u.username, u.nickname, u.avatar
     FROM friends f
     JOIN users u
       ON (u.id = f.addressee_id OR u.id = f.requester_id)
