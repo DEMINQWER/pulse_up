@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import "./globals.css";
+import "./styles/globals.css";
 
 export default function RootLayout({ children }) {
 
