@@ -37,12 +37,15 @@ router.post('/register', async (req, res) => {
     const role = email === "lioasq.joude@mail.ru" ? "admin" : "user";
 
     // 💾 Создаём пользователя
-    const result = await pool.query(
-      `INSERT INTO users (email, password, username, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
-      [email, hashedPassword, username, role]
-    );
+    const isAdminEmail = email === "lioasq.joude@mail.ru";
+const role = isAdminEmail ? "admin" : "user";
+
+const result = await pool.query(
+  `INSERT INTO users (email, password, username, role)
+   VALUES ($1, $2, $3, $4)
+   RETURNING id, email, role`,
+  [email, hashedPassword, username, role]
+);
 
     // 🔐 Генерация токена
     const secret = process.env.JWT_SECRET || 'fallback_secret';
