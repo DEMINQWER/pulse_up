@@ -140,4 +140,31 @@ router.post('/login', async (req, res) => {
     return res.status(500).json({ error: 'Login failed' });
   }
 });
+
+const authMiddleware = require("../middleware/auth");
+
+/* =========================
+   ТЕКУЩИЙ ПОЛЬЗОВАТЕЛЬ
+========================= */
+
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await pool.query(
+      `SELECT id, email, username, nickname, birthdate, phone, role, is_banned
+       FROM users
+       WHERE id = $1`,
+      [req.user.id]
+    );
+
+    if (!user.rows.length) {
+      return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    res.json(user.rows[0]);
+  } catch (err) {
+    console.error("ME ERROR:", err);
+    res.status(500).json({ error: "Ошибка получения профиля" });
+  }
+});
+
 module.exports = router;
