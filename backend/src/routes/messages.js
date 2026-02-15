@@ -3,64 +3,64 @@ const router = express.Router();
 const { pool } = require('../db');
 const auth = require('../middleware/auth');
 
-// ================= GET USER CHATS =================
-router.get('/', auth, async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT c.*
-      FROM chats c
-      JOIN chat_users cu ON cu.chat_id = c.id
-      WHERE cu.user_id = $1
-      ORDER BY c.created_at DESC
-    `, [req.user.id]);
+/* =========================
+   GET MESSAGES (LIMITED)
+========================= */
 
-    res.json({ chats: result.rows });
+router.get('/:chatId', auth, async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    // Проверяем, что пользователь участник чата
+    const check = await pool.query(`
+      SELECT 1 FROM chat_users
+      WHERE chat_id = $1 AND user_id = $2
+    `, [chatId, req.user.id]);
+
+    if (check.rows.length === 0) {
+      return res.status(403).json({ error: "Нет доступа к чату" });
+    }
+
+    const result = await pool.query(`
+      SELECT id, user_id, content, file_url, created_at
+      FROM messages
+      WHERE chat_id = $1
+      ORDER BY created_at DESC
+      LIMIT 50
+    `, [chatId]);
+
+    res.json(result.rows.reverse());
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Load chats failed' });
+    console.error("GET MESSAGES ERROR:", err);
+    res.status(500).json({ error: "Load messages failed" });
   }
 });
 
-// ================= CREATE PRIVATE CHAT BY USERNAME =================
-router.post('/private', auth, async (req, res) => {
+/* =========================
+   SEND MESSAGE
+========================= */
+
+router.post('/:chatId', auth, async (req, res) => {
   try {
-    const { username } = req.body;
+    const { chatId } = req.params;
+    const { content } = req.body;
 
-    if (!username) {
-      return res.status(400).json({ error: 'Username required' });
+    if (!content) {
+      return res.status(400).json({ error: "Message content required" });
     }
 
-    const userCheck = await pool.query(
-      `SELECT id FROM users WHERE username = $1`,
-      [username]
-    );
-
-    if (userCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const otherUserId = userCheck.rows[0].id;
-
-    // создаём чат
-    const chatResult = await pool.query(`
-      INSERT INTO chats (title, is_group)
-      VALUES ($1, false)
+    const result = await pool.query(`
+      INSERT INTO messages (chat_id, user_id, content)
+      VALUES ($1, $2, $3)
       RETURNING *
-    `, [username]);
+    `, [chatId, req.user.id, content]);
 
-    const chat = chatResult.rows[0];
-
-    await pool.query(`
-      INSERT INTO chat_users (chat_id, user_id)
-      VALUES ($1, $2), ($1, $3)
-    `, [chat.id, req.user.id, otherUserId]);
-
-    res.json(chat);
+    res.json(result.rows[0]);
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Create private chat failed' });
+    console.error("SEND MESSAGE ERROR:", err);
+    res.status(500).json({ error: "Send message failed" });
   }
 });
 

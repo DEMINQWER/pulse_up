@@ -46,7 +46,7 @@ async function initDB() {
       WHERE username IS NULL OR username = '';
     `);
 
-    /* ========= MAKE FIRST USER ADMIN ========= */
+    /* ========= MAKE ADMIN ========= */
 
     await pool.query(`
       UPDATE users
@@ -124,7 +124,7 @@ async function initDB() {
       );
     `);
 
-    /* ========= INDEXES (Performance) ========= */
+    /* ========= PERFORMANCE INDEXES ========= */
 
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_users_created_at
@@ -139,6 +139,26 @@ async function initDB() {
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_reports_target
       ON reports(target_id);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_chat_users_user
+      ON chat_users(user_id);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_chat_users_chat
+      ON chat_users(chat_id);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_messages_chat
+      ON messages(chat_id);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_messages_created
+      ON messages(created_at);
     `);
 
     console.log("✅ Database ready");

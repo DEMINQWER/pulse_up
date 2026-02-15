@@ -1,69 +1,121 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 
 export default function ChatPage() {
   const { id } = useParams()
-  const [messages, setMessages] = useState([])
-  const [text, setText] = useState('')
 
-  const token =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('token')
-      : null
+  const [messages, setMessages] = useState([])
+  const [text, setText] = useState("")
+  const [userId, setUserId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
-    if (!id) return
+    const token = localStorage.getItem("token")
+    if (!token) return
+
+    try {
+      const decoded = JSON.parse(atob(token.split(".")[1]))
+      setUserId(decoded.id)
+    } catch (err) {
+      console.error("JWT decode error", err)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!id || !userId) return
     loadMessages()
-  }, [id])
+  }, [id, userId])
 
   const loadMessages = async () => {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    try {
+      setLoading(true)
+
+      const token = localStorage.getItem("token")
+      if (!token) return
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!res.ok) {
+        setMessages([])
+        setLoading(false)
+        return
       }
-    )
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (!Array.isArray(data)) {
-      setMessages([])
-      return
+      if (!Array.isArray(data)) {
+        setMessages([])
+        setLoading(false)
+        return
+      }
+
+      const formatted = data.map((msg) => ({
+        ...msg,
+        isMine: msg.user_id === userId,
+      }))
+
+      setMessages(formatted)
+      setLoading(false)
+
+    } catch (err) {
+      console.error("Load messages error:", err)
+      setLoading(false)
     }
-
-    const userId = JSON.parse(
-      atob(token.split('.')[1])
-    ).id
-
-    const formatted = data.map((msg) => ({
-      ...msg,
-      isMine: msg.user_id === userId,
-    }))
-
-    setMessages(formatted)
   }
 
   const sendMessage = async () => {
-    if (!text.trim()) return
+    if (!text.trim() || sending) return
 
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: text }),
+    try {
+      setSending(true)
+
+      const token = localStorage.getItem("token")
+      if (!token) return
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content: text }),
+        }
+      )
+
+      if (!res.ok) {
+        setSending(false)
+        return
       }
-    )
 
-    setText('')
-    loadMessages()
+      const newMessage = await res.json()
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          ...newMessage,
+          isMine: true,
+        },
+      ])
+
+      setText("")
+      setSending(false)
+
+    } catch (err) {
+      console.error("Send error:", err)
+      setSending(false)
+    }
   }
 
   return (
@@ -74,11 +126,20 @@ export default function ChatPage() {
       </div>
 
       <div className="chat-messages">
+
+        {loading && <div>Загрузка...</div>}
+
+        {!loading && messages.length === 0 && (
+          <div style={{ opacity: 0.6 }}>
+            Сообщений пока нет
+          </div>
+        )}
+
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`message ${
-              msg.isMine ? 'mine' : 'other'
+              msg.isMine ? "mine" : "other"
             }`}
           >
             <div className="message-content">
@@ -86,6 +147,7 @@ export default function ChatPage() {
             </div>
           </div>
         ))}
+
       </div>
 
       <div className="chat-input">
@@ -93,12 +155,16 @@ export default function ChatPage() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Введите сообщение..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter") sendMessage()
+          }}
         />
 
-        <button onClick={sendMessage}>
-          ➤
+        <button onClick={sendMessage} disabled={sending}>
+          {sending ? "..." : "➤"}
         </button>
       </div>
+
     </div>
   )
 }
