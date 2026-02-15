@@ -55,18 +55,8 @@ router.get('/me', async (req, res) => {
 
 router.get('/fix-username', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "No token provided" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     await pool.query(
-      "UPDATE users SET username = $1 WHERE id = $2",
-      ["admin18", decoded.id]
+      "UPDATE users SET username = 'admin18' WHERE id = 18"
     );
 
     res.json({ message: "Username fixed" });
