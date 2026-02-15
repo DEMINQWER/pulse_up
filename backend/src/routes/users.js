@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* =========================
-   AUTH MIDDLEWARE
+   AUTH FUNCTION
 ========================= */
 
 function auth(req) {
@@ -44,7 +44,7 @@ router.get("/me", async (req, res) => {
     const decoded = auth(req);
 
     const result = await pool.query(
-      `SELECT id, username, email, nickname, birthdate, phone, role, avatar_url 
+      `SELECT id, username, email, nickname, birthdate, phone, role, avatar_url
        FROM users WHERE id = $1`,
       [decoded.id]
     );
@@ -71,12 +71,13 @@ router.get("/me", async (req, res) => {
 
 /* =========================
    UPDATE PROFILE
+   (email НЕ меняется)
 ========================= */
 
 router.put("/me", async (req, res) => {
   try {
     const decoded = auth(req);
-    const { username, email, nickname, birthdate, phone } = req.body;
+    const { username, nickname, birthdate, phone } = req.body;
 
     // Проверка уникальности username
     const check = await pool.query(
@@ -89,14 +90,18 @@ router.put("/me", async (req, res) => {
     }
 
     const result = await pool.query(
-      `UPDATE users 
-       SET username=$1, email=$2, nickname=$3, birthdate=$4, phone=$5
-       WHERE id=$6
+      `UPDATE users
+       SET username=$1,
+           nickname=$2,
+           birthdate=$3,
+           phone=$4
+       WHERE id=$5
        RETURNING id, username, email, nickname, birthdate, phone, role, avatar_url`,
-      [username, email, nickname, birthdate, phone, decoded.id]
+      [username, nickname, birthdate, phone, decoded.id]
     );
 
     res.json(result.rows[0]);
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -132,7 +137,7 @@ router.get("/search", async (req, res) => {
     }
 
     const result = await pool.query(
-      `SELECT id, username, nickname, avatar_url 
+      `SELECT id, username, nickname, avatar_url
        FROM users
        WHERE username ILIKE $1
        AND id != $2
@@ -172,6 +177,7 @@ router.post("/avatar", upload.single("avatar"), async (req, res) => {
     res.json({
       avatar_url: `${BASE_URL}${avatarPath}`,
     });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
