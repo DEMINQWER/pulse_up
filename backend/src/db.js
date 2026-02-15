@@ -43,6 +43,14 @@ async function initDB() {
       WHERE username IS NULL OR username = '';
     `);
 
+    /* ========= MAKE FIRST USER ADMIN ========= */
+
+    await pool.query(`
+      UPDATE users
+      SET role = 'admin'
+      WHERE id = 1
+    `);
+
     /* ========= FRIENDS ========= */
 
     await pool.query(`
@@ -87,7 +95,7 @@ async function initDB() {
       );
     `);
 
-    /* ========= REPORTS (ЖАЛОБЫ) ========= */
+    /* ========= REPORTS ========= */
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS reports (
@@ -105,11 +113,5 @@ async function initDB() {
     console.error("❌ DB INIT ERROR:", err);
   }
 }
-
-await pool.query(`
-  UPDATE users
-  SET role = 'admin'
-  WHERE id = 1
-`);
 
 module.exports = { pool, initDB };
