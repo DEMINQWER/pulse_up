@@ -3,48 +3,59 @@ const router = express.Router();
 const { pool } = require("../db");
 const auth = require("../middleware/auth");
 
-// Добавить по username
-router.post("/add", auth, async (req, res) => {
-  const { username } = req.body;
+/* =========================
+   LIST FRIENDS
+========================= */
 
-  if (!username) return res.status(400).json({ error: "Username required" });
-
-  const user = await pool.query(
-    "SELECT id FROM users WHERE username=$1",
-    [username]
-  );
-
-  if (!user.rows.length) return res.status(404).json({ error: "User not found" });
-
-  if (user.rows[0].id === req.user.id)
-    return res.status(400).json({ error: "Cannot add yourself" });
-
+router.get("/", auth, async (req, res) => {
   try {
-    await pool.query(
-      `INSERT INTO friends (requester_id, addressee_id, status)
-       VALUES ($1,$2,'accepted')`,
-      [req.user.id, user.rows[0].id]
+    const result = await pool.query(
+      `
+      SELECT u.id, u.username, u.nickname, u.avatar_url
+      FROM friends f
+      JOIN users u
+        ON (u.id = f.addressee_id OR u.id = f.requester_id)
+      WHERE (f.requester_id = $1 OR f.addressee_id = $1)
+        AND u.id != $1
+        AND f.status = 'accepted'
+      `,
+      [req.user.id]
     );
 
-    res.json({ success: true });
-  } catch {
-    res.status(400).json({ error: "Already added" });
+    res.json(result.rows);
+  } catch (err) {
+    console.error("GET FRIENDS ERROR:", err);
+    res.status(500).json({ error: "Failed to load friends" });
   }
 });
 
-// список друзей
-router.get("/", auth, async (req, res) => {
-  const result = await pool.query(`
-    SELECT u.id, u.username, u.nickname, u.avatar
-    FROM friends f
-    JOIN users u
-      ON (u.id = f.addressee_id OR u.id = f.requester_id)
-    WHERE (f.requester_id = ${req.user.id}
-       OR f.addressee_id = ${req.user.id})
-      AND u.id != ${req.user.id}
-  `);
+/* =========================
+   SEND FRIEND REQUEST
+========================= */
 
-  res.json(result.rows);
+router.post("/request/:id", auth, async (req, res) => {
+  try {
+    const targetId = parseInt(req.params.id);
+
+    if (targetId === req.user.id) {
+      return res.status(400).json({ error: "Cannot add yourself" });
+    }
+
+    await pool.query(
+      `
+      INSERT INTO friends (requester_id, addressee_id, status)
+      VALUES ($1, $2, 'pending')
+      ON CONFLICT DO NOTHING
+      `,
+      [req.user.id, targetId]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("FRIEND REQUEST ERROR:", err);
+    res.status(500).json({ error: "Request failed" });
+  }
 });
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const jwt = require("jsonwebtoken");
 const { pool } = require("../db");
+const auth = require("../middleware/auth");
 const multer = require("multer");
 const path = require("path");
 
@@ -21,32 +21,15 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* =========================
-   AUTH FUNCTION
-========================= */
-
-function auth(req) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    throw new Error("No token provided");
-  }
-
-  const token = authHeader.split(" ")[1];
-  return jwt.verify(token, process.env.JWT_SECRET);
-}
-
-/* =========================
    GET CURRENT USER
 ========================= */
 
-router.get("/me", async (req, res) => {
+router.get("/me", auth, async (req, res) => {
   try {
-    const decoded = auth(req);
-
     const result = await pool.query(
       `SELECT id, username, email, nickname, birthdate, phone, role, avatar_url
        FROM users WHERE id = $1`,
-      [decoded.id]
+      [req.user.id]
     );
 
     if (!result.rows.length) {
@@ -64,25 +47,29 @@ router.get("/me", async (req, res) => {
     }
 
     res.json(user);
-  } catch (error) {
-    res.status(401).json({ error: error.message });
+
+  } catch (err) {
+    console.error("GET ME ERROR:", err);
+    res.status(500).json({ error: "Failed to load profile" });
   }
 });
 
 /* =========================
    UPDATE PROFILE
-   (email НЕ меняется)
 ========================= */
 
-router.put("/me", async (req, res) => {
+router.put("/me", auth, async (req, res) => {
   try {
-    const decoded = auth(req);
     const { username, nickname, birthdate, phone } = req.body;
+
+    if (!username || username.trim().length < 3) {
+      return res.status(400).json({ error: "Username too short" });
+    }
 
     // Проверка уникальности username
     const check = await pool.query(
       "SELECT id FROM users WHERE username = $1 AND id != $2",
-      [username, decoded.id]
+      [username, req.user.id]
     );
 
     if (check.rows.length > 0) {
@@ -97,13 +84,14 @@ router.put("/me", async (req, res) => {
            phone=$4
        WHERE id=$5
        RETURNING id, username, email, nickname, birthdate, phone, role, avatar_url`,
-      [username, nickname, birthdate, phone, decoded.id]
+      [username.trim(), nickname, birthdate, phone, req.user.id]
     );
 
     res.json(result.rows[0]);
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("UPDATE PROFILE ERROR:", err);
+    res.status(500).json({ error: "Update failed" });
   }
 });
 
@@ -111,15 +99,13 @@ router.put("/me", async (req, res) => {
    DELETE ACCOUNT
 ========================= */
 
-router.delete("/me", async (req, res) => {
+router.delete("/me", auth, async (req, res) => {
   try {
-    const decoded = auth(req);
-
-    await pool.query("DELETE FROM users WHERE id = $1", [decoded.id]);
-
+    await pool.query("DELETE FROM users WHERE id = $1", [req.user.id]);
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("DELETE USER ERROR:", err);
+    res.status(500).json({ error: "Delete failed" });
   }
 });
 
@@ -127,27 +113,31 @@ router.delete("/me", async (req, res) => {
    SEARCH USERS
 ========================= */
 
-router.get("/search", async (req, res) => {
+router.get("/search", auth, async (req, res) => {
   try {
-    const decoded = auth(req);
     const { username } = req.query;
 
-    if (!username) {
-      return res.status(400).json({ error: "Username query required" });
+    if (!username || username.length < 2) {
+      return res.json([]);
     }
 
     const result = await pool.query(
-      `SELECT id, username, nickname, avatar_url
-       FROM users
-       WHERE username ILIKE $1
-       AND id != $2
-       LIMIT 20`,
-      [`%${username}%`, decoded.id]
+      `
+      SELECT id, username, nickname, avatar_url
+      FROM users
+      WHERE username ILIKE $1
+        AND id != $2
+      ORDER BY username ASC
+      LIMIT 20
+      `,
+      [`%${username}%`, req.user.id]
     );
 
     res.json(result.rows);
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("SEARCH ERROR:", err);
+    res.status(500).json({ error: "Search failed" });
   }
 });
 
@@ -155,10 +145,8 @@ router.get("/search", async (req, res) => {
    UPLOAD AVATAR
 ========================= */
 
-router.post("/avatar", upload.single("avatar"), async (req, res) => {
+router.post("/avatar", auth, upload.single("avatar"), async (req, res) => {
   try {
-    const decoded = auth(req);
-
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
@@ -167,7 +155,7 @@ router.post("/avatar", upload.single("avatar"), async (req, res) => {
 
     await pool.query(
       "UPDATE users SET avatar_url=$1 WHERE id=$2",
-      [avatarPath, decoded.id]
+      [avatarPath, req.user.id]
     );
 
     const BASE_URL =
@@ -179,7 +167,8 @@ router.post("/avatar", upload.single("avatar"), async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("UPLOAD AVATAR ERROR:", err);
+    res.status(500).json({ error: "Upload failed" });
   }
 });
 
