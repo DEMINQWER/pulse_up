@@ -28,6 +28,13 @@ async function initDB() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';`);
 
+    // Исправляем пользователей без username
+await pool.query(`
+  UPDATE users
+  SET username = 'user' || id
+  WHERE username IS NULL;
+`);
+
     /* ========= FRIENDS ========= */
 
     await pool.query(`
