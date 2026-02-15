@@ -44,7 +44,6 @@ const result = await pool.query(
    RETURNING id, email, role`,
   [email, hashedPassword, username, role]
 );
-);
 
     // 🔐 Генерация токена
     const secret = process.env.JWT_SECRET || 'fallback_secret';
