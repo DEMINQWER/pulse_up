@@ -7,6 +7,9 @@ const pool = new Pool({
 
 async function initDB() {
   try {
+
+    /* ================= USERS ================= */
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -22,6 +25,34 @@ async function initDB() {
       );
     `);
 
+    // 🔥 ВАЖНО: если таблица уже существовала без avatar_url
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+    `);
+
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS nickname TEXT;
+    `);
+
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS birthdate TEXT;
+    `);
+
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS phone TEXT;
+    `);
+
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';
+    `);
+
+    /* ================= FRIENDS ================= */
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS friends (
         id SERIAL PRIMARY KEY,
@@ -32,6 +63,8 @@ async function initDB() {
         UNIQUE(requester_id, addressee_id)
       );
     `);
+
+    /* ================= CHATS ================= */
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS chats (
@@ -49,6 +82,8 @@ async function initDB() {
       );
     `);
 
+    /* ================= MESSAGES ================= */
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id SERIAL PRIMARY KEY,
@@ -61,6 +96,7 @@ async function initDB() {
     `);
 
     console.log("Database ready");
+
   } catch (err) {
     console.error("DB INIT ERROR:", err);
   }
