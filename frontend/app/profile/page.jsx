@@ -21,7 +21,7 @@ export default function Profile() {
   return (
     <div className="page">
       <h2>{user.nickname}</h2>
-      <p>@{user.username}</p>
+      <p>@{user.username ?? "no_username"}</p>
     </div>
   );
 }

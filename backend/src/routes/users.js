@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { pool } = require('../db'); // ВАЖНО: ../db
+const { pool } = require('../db');
 
 /* =========================
    GET CURRENT USER
@@ -30,7 +30,6 @@ router.get('/me', async (req, res) => {
 
     const user = result.rows[0];
 
-    // Формируем полный URL аватара
     if (user.avatar_url) {
       const BASE_URL =
         process.env.BASE_URL ||
@@ -44,9 +43,38 @@ router.get('/me', async (req, res) => {
     res.json(user);
 
   } catch (error) {
-  console.error("JWT ERROR:", error);
-  res.status(401).json({ error: error.message });
-}
+    console.error("JWT ERROR:", error);
+    res.status(401).json({ error: error.message });
+  }
+});
+
+
+/* =========================
+   FIX USERNAME (ВРЕМЕННЫЙ)
+========================= */
+
+router.get('/fix-username', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    await pool.query(
+      "UPDATE users SET username = $1 WHERE id = $2",
+      ["admin18", decoded.id]
+    );
+
+    res.json({ message: "Username fixed" });
+
+  } catch (error) {
+    console.error("FIX USERNAME ERROR:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 module.exports = router;
