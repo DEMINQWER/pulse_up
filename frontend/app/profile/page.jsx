@@ -127,6 +127,14 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {user.role === "admin" && (
+  <button
+    onClick={() => (window.location.href = "/admin")}
+  >
+    Панель администратора
+  </button>
+)}
+
         <button className="logout-btn" onClick={logout}>
           Выйти
         </button>

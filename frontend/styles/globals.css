@@ -569,3 +569,23 @@ button:hover {
   align-items: center;
   color: white;
 }
+
+.admin-user {
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-actions button {
+  padding: 8px 12px;
+  font-size: 12px;
+}
