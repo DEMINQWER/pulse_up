@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
       [decoded.id]
     );
 
-    res.json(result.rows);
+    res.json({ chats: result.rows });
 
   } catch (error) {
     console.error("GET /chats ERROR:", error);
