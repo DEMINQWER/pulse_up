@@ -44,9 +44,9 @@ router.get('/me', async (req, res) => {
     res.json(user);
 
   } catch (error) {
-    console.error("GET /users/me ERROR:", error);
-    res.status(401).json({ error: "Invalid or expired token" });
-  }
+  console.error("JWT ERROR:", error);
+  res.status(401).json({ error: error.message });
+}
 });
 
 module.exports = router;
