@@ -4,32 +4,48 @@ const { pool } = require('../db');
 const auth = require('../middleware/auth');
 
 /* =========================
-   GET MESSAGES (LIMITED)
+   GET MESSAGES
 ========================= */
 
 router.get('/:chatId', auth, async (req, res) => {
   try {
     const { chatId } = req.params;
 
-    // Проверяем, что пользователь участник чата
-    const check = await pool.query(`
+    // Проверяем существование чата
+    const chatExists = await pool.query(
+      `SELECT id FROM chats WHERE id = $1`,
+      [chatId]
+    );
+
+    if (chatExists.rows.length === 0) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    // Проверяем что пользователь участник
+    const accessCheck = await pool.query(
+      `
       SELECT 1 FROM chat_users
       WHERE chat_id = $1 AND user_id = $2
-    `, [chatId, req.user.id]);
+      `,
+      [chatId, req.user.id]
+    );
 
-    if (check.rows.length === 0) {
+    if (accessCheck.rows.length === 0) {
       return res.status(403).json({ error: "Нет доступа к чату" });
     }
 
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT id, user_id, content, file_url, created_at
       FROM messages
       WHERE chat_id = $1
-      ORDER BY created_at DESC
+      ORDER BY created_at ASC
       LIMIT 50
-    `, [chatId]);
+      `,
+      [chatId]
+    );
 
-    res.json(result.rows.reverse());
+    res.json(result.rows);
 
   } catch (err) {
     console.error("GET MESSAGES ERROR:", err);
@@ -46,15 +62,41 @@ router.post('/:chatId', auth, async (req, res) => {
     const { chatId } = req.params;
     const { content } = req.body;
 
-    if (!content) {
+    if (!content || !content.trim()) {
       return res.status(400).json({ error: "Message content required" });
     }
 
-    const result = await pool.query(`
+    // Проверяем существование чата
+    const chatExists = await pool.query(
+      `SELECT id FROM chats WHERE id = $1`,
+      [chatId]
+    );
+
+    if (chatExists.rows.length === 0) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    // Проверяем участие пользователя
+    const accessCheck = await pool.query(
+      `
+      SELECT 1 FROM chat_users
+      WHERE chat_id = $1 AND user_id = $2
+      `,
+      [chatId, req.user.id]
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ error: "Нет доступа к чату" });
+    }
+
+    const result = await pool.query(
+      `
       INSERT INTO messages (chat_id, user_id, content)
       VALUES ($1, $2, $3)
-      RETURNING *
-    `, [chatId, req.user.id, content]);
+      RETURNING id, user_id, content, file_url, created_at
+      `,
+      [chatId, req.user.id, content.trim()]
+    );
 
     res.json(result.rows[0]);
 
