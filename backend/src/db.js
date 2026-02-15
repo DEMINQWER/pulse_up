@@ -7,6 +7,7 @@ const pool = new Pool({
 
 async function initDB() {
   try {
+
     /* ========= USERS ========= */
 
     await pool.query(`
@@ -20,6 +21,7 @@ async function initDB() {
         phone TEXT,
         avatar_url TEXT,
         role TEXT DEFAULT 'user',
+        is_banned BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -31,6 +33,7 @@ async function initDB() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;`);
 
     /* ========= FIX BROKEN USERNAMES ========= */
 
@@ -84,7 +87,20 @@ async function initDB() {
       );
     `);
 
+    /* ========= REPORTS (ЖАЛОБЫ) ========= */
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reports (
+        id SERIAL PRIMARY KEY,
+        reporter_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        target_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(reporter_id, target_id)
+      );
+    `);
+
     console.log("✅ Database ready");
+
   } catch (err) {
     console.error("❌ DB INIT ERROR:", err);
   }

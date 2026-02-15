@@ -5,7 +5,7 @@ const auth = require("../middleware/auth");
 const role = require("../middleware/role");
 
 router.use(auth);
-router.use(role("admin"));
+router.use(role(["admin, moderator"]));
 
 /* =========================
    ПОЛУЧИТЬ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ
@@ -35,6 +35,19 @@ router.put("/ban/:id", async (req, res) => {
     if (parseInt(userId) === req.user.id) {
       return res.status(400).json({ error: "Нельзя забанить самого себя" });
     }
+
+    if (req.user.role === "moderator") {
+  const target = await pool.query(
+    "SELECT role FROM users WHERE id = $1",
+    [userId]
+  );
+
+  if (target.rows[0]?.role === "admin") {
+    return res.status(403).json({
+      error: "Модератор не может банить администратора",
+    });
+  }
+}
 
     await pool.query(
       "UPDATE users SET is_banned = true WHERE id = $1",
@@ -125,6 +138,40 @@ router.put("/make-user/:id", async (req, res) => {
   } catch (err) {
     console.error("MAKE USER ERROR:", err);
     res.status(500).json({ error: "Ошибка изменения роли" });
+  }
+});
+
+/* =========================
+   СТАТИСТИКА
+========================= */
+
+router.get("/stats", async (req, res) => {
+  try {
+    const total = await pool.query(
+      "SELECT COUNT(*) FROM users"
+    );
+
+    const banned = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE is_banned = true"
+    );
+
+    const admins = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE role = 'admin'"
+    );
+
+    const moderators = await pool.query(
+      "SELECT COUNT(*) FROM users WHERE role = 'moderator'"
+    );
+
+    res.json({
+      total: total.rows[0].count,
+      banned: banned.rows[0].count,
+      admins: admins.rows[0].count,
+      moderators: moderators.rows[0].count,
+    });
+  } catch (err) {
+    console.error("STATS ERROR:", err);
+    res.status(500).json({ error: "Ошибка статистики" });
   }
 });
 
