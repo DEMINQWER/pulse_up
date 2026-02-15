@@ -30,7 +30,7 @@ export default function Chats() {
       {chats.map(chat => (
         <Link key={chat.id} href={`/chats/${chat.id}`}>
           <div className="chat-item">
-            Диалог #{chat.id}
+            {chat.other_username}
           </div>
         </Link>
       ))}

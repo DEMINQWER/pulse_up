@@ -13,12 +13,13 @@ router.get('/', auth, async (req, res) => {
       SELECT c.id,
              c.is_group,
              c.created_at,
+             u.id AS other_user_id,
              u.username AS other_username
       FROM chats c
-      JOIN chat_users cu ON cu.chat_id = c.id
+      JOIN chat_users cu1 ON cu1.chat_id = c.id
       JOIN chat_users cu2 ON cu2.chat_id = c.id
       JOIN users u ON u.id = cu2.user_id
-      WHERE cu.user_id = $1
+      WHERE cu1.user_id = $1
         AND cu2.user_id != $1
       ORDER BY c.created_at DESC
       LIMIT 50
@@ -29,6 +30,46 @@ router.get('/', auth, async (req, res) => {
   } catch (err) {
     console.error("GET CHATS ERROR:", err);
     res.status(500).json({ error: "Failed to load chats" });
+  }
+});
+
+/* =========================
+   GET CHAT INFO (для header)
+========================= */
+
+router.get('/:chatId', auth, async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const accessCheck = await pool.query(
+      `SELECT 1 FROM chat_users WHERE chat_id = $1 AND user_id = $2`,
+      [chatId, req.user.id]
+    );
+
+    if (accessCheck.rows.length === 0) {
+      return res.status(403).json({ error: "Нет доступа к чату" });
+    }
+
+    const result = await pool.query(`
+      SELECT u.id AS other_user_id,
+             u.username AS other_username
+      FROM chat_users cu1
+      JOIN chat_users cu2 ON cu1.chat_id = cu2.chat_id
+      JOIN users u ON u.id = cu2.user_id
+      WHERE cu1.chat_id = $1
+        AND cu1.user_id = $2
+        AND cu2.user_id != $2
+    `, [chatId, req.user.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Chat not found" });
+    }
+
+    res.json(result.rows[0]);
+
+  } catch (err) {
+    console.error("GET CHAT INFO ERROR:", err);
+    res.status(500).json({ error: "Failed to load chat info" });
   }
 });
 
@@ -48,7 +89,6 @@ router.post('/private/:userId', auth, async (req, res) => {
       return res.status(400).json({ error: "Нельзя создать чат с собой" });
     }
 
-    // Проверяем существует ли пользователь
     const userCheck = await pool.query(
       `SELECT id FROM users WHERE id = $1`,
       [otherUserId]
@@ -58,7 +98,6 @@ router.post('/private/:userId', auth, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Проверка существующего приватного чата
     const existing = await pool.query(`
       SELECT c.id
       FROM chats c
@@ -73,7 +112,6 @@ router.post('/private/:userId', auth, async (req, res) => {
       return res.json({ chatId: existing.rows[0].id });
     }
 
-    // Создаём чат
     const chatResult = await pool.query(`
       INSERT INTO chats (is_group)
       VALUES (false)
@@ -82,7 +120,6 @@ router.post('/private/:userId', auth, async (req, res) => {
 
     const chatId = chatResult.rows[0].id;
 
-    // Добавляем пользователей
     await pool.query(`
       INSERT INTO chat_users (chat_id, user_id)
       VALUES ($1, $2), ($1, $3)

@@ -9,6 +9,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([])
   const [text, setText] = useState("")
   const [userId, setUserId] = useState(null)
+  const [chatName, setChatName] = useState("")
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
 
@@ -27,7 +28,25 @@ export default function ChatPage() {
   useEffect(() => {
     if (!id || !userId) return
     loadMessages()
+    loadChatInfo()
   }, [id, userId])
+
+  const loadChatInfo = async () => {
+    const token = localStorage.getItem("token")
+    if (!token) return
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/chats/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
+
+    if (!res.ok) return
+
+    const data = await res.json()
+    setChatName(data.other_username)
+  }
 
   const loadMessages = async () => {
     try {
@@ -53,12 +72,6 @@ export default function ChatPage() {
 
       const data = await res.json()
 
-      if (!Array.isArray(data)) {
-        setMessages([])
-        setLoading(false)
-        return
-      }
-
       const formatted = data.map((msg) => ({
         ...msg,
         isMine: msg.user_id === userId,
@@ -80,7 +93,6 @@ export default function ChatPage() {
       setSending(true)
 
       const token = localStorage.getItem("token")
-      if (!token) return
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
@@ -122,7 +134,7 @@ export default function ChatPage() {
     <div className="chat-container">
 
       <div className="chat-header">
-        <span>Диалог #{id}</span>
+        <span>{chatName || "Загрузка..."}</span>
       </div>
 
       <div className="chat-messages">
