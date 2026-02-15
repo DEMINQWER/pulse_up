@@ -19,36 +19,58 @@ export default function Friends() {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
-      .then(setFriends);
-  }, []);
+      .then(setFriends)
+      .catch(err => console.error("Load friends error:", err));
+  }, [API]);
 
   const searchUser = async () => {
     const token = localStorage.getItem("token");
     if (!search || !token) return;
 
-    const res = await fetch(`${API}/users/search?username=${search}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    try {
+      const res = await fetch(
+        `${API}/users/search?username=${encodeURIComponent(search)}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
-    const data = await res.json();
-    setResults(data);
+      const data = await res.json();
+      setResults(data);
+    } catch (err) {
+      console.error("Search error:", err);
+    }
   };
 
   const startChat = async (userId) => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const res = await fetch(`${API}/chats/start`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ userId })
-    });
+    try {
+      const res = await fetch(
+        `${API}/chats/private/${userId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
-    const data = await res.json();
-    router.push(`/chats/${data.chatId}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Chat create error:", data);
+        return;
+      }
+
+      if (data.chatId) {
+        router.push(`/chats/${data.chatId}`);
+      }
+
+    } catch (err) {
+      console.error("Start chat error:", err);
+    }
   };
 
   return (
