@@ -35,6 +35,7 @@ app.use('/messages', require('./routes/messages'));
 app.use('/admin', require('./routes/admin'));
 app.use('/friends', require('./routes/friends'));
 app.use('/users', require('./routes/users'));
+app.use("/uploads", express.static("uploads"));
 
 /* =========================
    ROOT CHECK (ВАЖНО)

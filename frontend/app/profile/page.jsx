@@ -2,172 +2,202 @@
 
 import { useEffect, useState } from "react";
 
+const API = "https://pulse-9ui4.onrender.com";
+
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
+  const [edit, setEdit] = useState(false);
+  const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          throw new Error("No token found");
-        }
-
-        const res = await fetch(
-          "https://pulse-9ui4.onrender.com/users/me",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error("Failed to load profile");
-        }
-
-        const data = await res.json();
-        setUser(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUser();
   }, []);
 
-  if (loading) {
-    return <div style={styles.center}>Loading profile...</div>;
-  }
+  const fetchUser = async () => {
+    const token = localStorage.getItem("token");
 
-  if (error) {
-    return <div style={styles.center}>{error}</div>;
-  }
+    const res = await fetch(`${API}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  if (!user) {
-    return <div style={styles.center}>No user data</div>;
-  }
+    const data = await res.json();
+    setUser(data);
+    setForm(data);
+    setLoading(false);
+  };
+
+  const updateProfile = async () => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(`${API}/users/update`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(form),
+    });
+
+    const data = await res.json();
+    setUser(data);
+    setEdit(false);
+  };
+
+  const uploadAvatar = async (e) => {
+    const token = localStorage.getItem("token");
+    const file = e.target.files[0];
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const res = await fetch(`${API}/users/avatar`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+
+    const data = await res.json();
+    setUser({ ...user, avatar_url: API + data.avatar_url });
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/";
+  };
+
+  if (loading) return <div style={center}>Loading...</div>;
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.card}>
-        <div style={styles.avatar}>
+    <div style={wrapper}>
+      <div style={card}>
+        <div style={avatarBox}>
           {user.avatar_url ? (
             <img
               src={user.avatar_url}
               alt="avatar"
-              style={styles.avatarImage}
+              style={avatar}
             />
           ) : (
-            <div style={styles.avatarPlaceholder}>
+            <div style={avatarPlaceholder}>
               {user.username?.[0]?.toUpperCase()}
             </div>
           )}
+          <input type="file" onChange={uploadAvatar} />
         </div>
 
-        <h2 style={styles.username}>
-          @{user.username}
-          {user.role === "admin" && (
-            <span style={styles.crown}> 👑</span>
-          )}
-        </h2>
+        {edit ? (
+          <>
+            <input
+              value={form.username || ""}
+              onChange={(e) =>
+                setForm({ ...form, username: e.target.value })
+              }
+            />
+            <input
+              value={form.email || ""}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+            />
+            <input
+              value={form.nickname || ""}
+              onChange={(e) =>
+                setForm({ ...form, nickname: e.target.value })
+              }
+            />
+            <input
+              value={form.birthdate || ""}
+              onChange={(e) =>
+                setForm({ ...form, birthdate: e.target.value })
+              }
+            />
+            <input
+              value={form.phone || ""}
+              onChange={(e) =>
+                setForm({ ...form, phone: e.target.value })
+              }
+            />
+            <button onClick={updateProfile}>Save</button>
+          </>
+        ) : (
+          <>
+            <h2>
+              @{user.username}{" "}
+              {user.role === "admin" && "👑"}
+            </h2>
+            <p>Email: {user.email || "—"}</p>
+            <p>Nickname: {user.nickname || "—"}</p>
+            <p>Birthdate: {user.birthdate || "—"}</p>
+            <p>Phone: {user.phone || "—"}</p>
+            <p>Role: {user.role}</p>
+            <button onClick={() => setEdit(true)}>
+              Edit Profile
+            </button>
+          </>
+        )}
 
-        <div style={styles.infoBlock}>
-          <ProfileRow label="ID" value={user.id} />
-          <ProfileRow label="Email" value={user.email} />
-          <ProfileRow label="Nickname" value={user.nickname} />
-          <ProfileRow label="Birthdate" value={user.birthdate} />
-          <ProfileRow label="Phone" value={user.phone} />
-          <ProfileRow label="Role" value={user.role} />
-        </div>
+        {user.role === "admin" && (
+          <button
+            onClick={() =>
+              (window.location.href = "/admin")
+            }
+          >
+            Admin Panel
+          </button>
+        )}
+
+        <button onClick={logout}>Logout</button>
       </div>
     </div>
   );
 }
 
-function ProfileRow({ label, value }) {
-  return (
-    <div style={styles.row}>
-      <span style={styles.label}>{label}</span>
-      <span style={styles.value}>{value || "—"}</span>
-    </div>
-  );
-}
+const wrapper = {
+  minHeight: "100vh",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  background: "#1f1c2c",
+};
 
-const styles = {
-  wrapper: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "linear-gradient(135deg, #1f1c2c, #302b63, #24243e)",
-    padding: "20px",
-  },
-  card: {
-    background: "rgba(255,255,255,0.05)",
-    backdropFilter: "blur(20px)",
-    borderRadius: "20px",
-    padding: "40px",
-    width: "420px",
-    color: "white",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-  },
-  avatar: {
-    display: "flex",
-    justifyContent: "center",
-    marginBottom: "20px",
-  },
-  avatarImage: {
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    objectFit: "cover",
-  },
-  avatarPlaceholder: {
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    background: "#6c5ce7",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "40px",
-    fontWeight: "bold",
-  },
-  username: {
-    textAlign: "center",
-    marginBottom: "20px",
-  },
-  crown: {
-    color: "gold",
-  },
-  infoBlock: {
-    marginTop: "20px",
-  },
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "10px",
-    borderBottom: "1px solid rgba(255,255,255,0.1)",
-    paddingBottom: "6px",
-  },
-  label: {
-    opacity: 0.7,
-  },
-  value: {
-    fontWeight: "bold",
-  },
-  center: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#1f1c2c",
-    color: "white",
-  },
+const card = {
+  background: "#2c2c3e",
+  padding: "30px",
+  borderRadius: "15px",
+  color: "white",
+  width: "400px",
+};
+
+const avatarBox = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+};
+
+const avatar = {
+  width: "120px",
+  height: "120px",
+  borderRadius: "50%",
+  objectFit: "cover",
+  marginBottom: "10px",
+};
+
+const avatarPlaceholder = {
+  width: "120px",
+  height: "120px",
+  borderRadius: "50%",
+  background: "#6c5ce7",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "40px",
+  marginBottom: "10px",
+};
+
+const center = {
+  minHeight: "100vh",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
 };

@@ -2,12 +2,11 @@ const { Pool } = require("pg");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
 });
 
 async function initDB() {
   try {
-
     /* ========= USERS ========= */
 
     await pool.query(`
@@ -16,24 +15,30 @@ async function initDB() {
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         username TEXT UNIQUE NOT NULL,
+        nickname TEXT,
+        birthdate TEXT,
+        phone TEXT,
+        avatar_url TEXT,
         role TEXT DEFAULT 'user',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
-    // Миграции (безопасные)
+    /* ========= SAFE MIGRATIONS ========= */
+
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';`);
 
-    // Исправляем пользователей без username
-await pool.query(`
-  UPDATE users
-  SET username = 'user' || id
-  WHERE username IS NULL;
-`);
+    /* ========= FIX BROKEN USERNAMES ========= */
+
+    await pool.query(`
+      UPDATE users
+      SET username = 'user' || id
+      WHERE username IS NULL OR username = '';
+    `);
 
     /* ========= FRIENDS ========= */
 
@@ -79,10 +84,9 @@ await pool.query(`
       );
     `);
 
-    console.log("Database ready");
-
+    console.log("✅ Database ready");
   } catch (err) {
-    console.error("DB INIT ERROR:", err);
+    console.error("❌ DB INIT ERROR:", err);
   }
 }
 
