@@ -3,87 +3,77 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
 
-export default function AdminPage() {
-  const [users, setUsers] = useState([]);
-  const [stats, setStats] = useState(null);
+export default function ProfilePage() {
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    loadUsers();
-    loadStats();
+    loadProfile();
   }, []);
 
-  const loadUsers = async () => {
-    const token = localStorage.getItem("token");
-    const data = await apiRequest("/admin/users", "GET", null, token);
-    setUsers(data);
+  const loadProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const data = await apiRequest("/auth/me", "GET", null, token);
+      setUser(data);
+    } catch (err) {
+      console.error("PROFILE ERROR:", err);
+    }
   };
 
-  const loadStats = async () => {
-    const token = localStorage.getItem("token");
-    const data = await apiRequest("/admin/stats", "GET", null, token);
-    setStats(data);
-  };
-
-  const banUser = async (id) => {
-    const token = localStorage.getItem("token");
-    await apiRequest(`/admin/ban/${id}`, "PUT", null, token);
-    loadUsers();
-    loadStats();
-  };
-
-  const unbanUser = async (id) => {
-    const token = localStorage.getItem("token");
-    await apiRequest(`/admin/unban/${id}`, "PUT", null, token);
-    loadUsers();
-    loadStats();
-  };
+  if (!user) {
+    return <div className="center">Загрузка профиля...</div>;
+  }
 
   return (
     <div className="profile-wrapper">
       <div className="profile-card glass">
 
-        <h2>👑 Админ панель</h2>
+        <h2 style={{ marginBottom: "20px" }}>
+          👤 Профиль
+        </h2>
 
-        {stats && (
-          <div className="admin-stats glass">
-            <div>Всего: {stats.total}</div>
-            <div>Забанены: {stats.banned}</div>
-            <div>Админы: {stats.admins}</div>
-            <div>Модераторы: {stats.moderators}</div>
-          </div>
+        <div className="profile-field glass">
+          <span>Username</span>
+          <b>@{user.username}</b>
+        </div>
+
+        <div className="profile-field glass">
+          <span>Email</span>
+          <b>{user.email}</b>
+        </div>
+
+        <div className="profile-field glass">
+          <span>Никнейм</span>
+          <b>{user.nickname || "Не указан"}</b>
+        </div>
+
+        <div className="profile-field glass">
+          <span>Дата рождения</span>
+          <b>{user.birthdate || "Не указана"}</b>
+        </div>
+
+        <div className="profile-field glass">
+          <span>Телефон</span>
+          <b>{user.phone || "Не указан"}</b>
+        </div>
+
+        <div className="profile-field glass">
+          <span>Роль</span>
+          <b>
+            {user.role === "admin" && "👑 Администратор"}
+            {user.role === "moderator" && "🛡 Модератор"}
+            {user.role === "user" && "Пользователь"}
+          </b>
+        </div>
+
+        {user.role === "admin" && (
+          <button
+            style={{ marginTop: "20px" }}
+            onClick={() => (window.location.href = "/admin")}
+          >
+            👑 Админ панель
+          </button>
         )}
-
-        {users.map((user) => (
-          <div key={user.id} className="admin-user glass">
-            <div>
-              <b>
-                @{user.username}
-                {user.role === "admin" && " 👑"}
-              </b>
-              <div style={{ fontSize: 12 }}>
-                {user.email}
-              </div>
-              <div style={{ fontSize: 12 }}>
-                Роль: {user.role}
-              </div>
-              <div style={{ fontSize: 12 }}>
-                Статус: {user.is_banned ? "Заблокирован" : "Активен"}
-              </div>
-            </div>
-
-            <div className="admin-actions">
-              {!user.is_banned ? (
-                <button onClick={() => banUser(user.id)}>
-                  Забанить
-                </button>
-              ) : (
-                <button onClick={() => unbanUser(user.id)}>
-                  Разбанить
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
 
       </div>
     </div>

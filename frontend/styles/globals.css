@@ -606,3 +606,17 @@ button:hover {
   justify-content: space-between;
   align-items: center;
 }
+
+.profile-field {
+  padding: 14px 18px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-field span {
+  font-size: 12px;
+  opacity: 0.6;
+}
