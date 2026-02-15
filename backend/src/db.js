@@ -22,6 +22,7 @@ async function initDB() {
         avatar_url TEXT,
         role TEXT DEFAULT 'user',
         is_banned BOOLEAN DEFAULT false,
+        ban_reason TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
@@ -34,8 +35,8 @@ async function initDB() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;`);
-
-    
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT;`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
 
     /* ========= FIX BROKEN USERNAMES ========= */
 
@@ -104,9 +105,40 @@ async function initDB() {
         id SERIAL PRIMARY KEY,
         reporter_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         target_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        reason TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(reporter_id, target_id)
       );
+    `);
+
+    /* ========= ADMIN LOGS ========= */
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS admin_logs (
+        id SERIAL PRIMARY KEY,
+        admin_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        target_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        action TEXT NOT NULL,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    /* ========= INDEXES (Performance) ========= */
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_users_created_at
+      ON users(created_at);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_admin_logs_created_at
+      ON admin_logs(created_at);
+    `);
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_reports_target
+      ON reports(target_id);
     `);
 
     console.log("✅ Database ready");

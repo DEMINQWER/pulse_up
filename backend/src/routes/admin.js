@@ -8,16 +8,31 @@ router.use(auth);
 router.use(role(["admin", "moderator"]));
 
 /* =========================
-   ПОЛУЧИТЬ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ
+   ПОЛУЧИТЬ ПОЛЬЗОВАТЕЛЕЙ С ПАГИНАЦИЕЙ
 ========================= */
 
 router.get("/users", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT id, username, email, role, is_banned FROM users ORDER BY id DESC"
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const users = await pool.query(
+      `SELECT id, username, email, role, is_banned, created_at
+       FROM users
+       ORDER BY id DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
 
-    res.json(result.rows);
+    const total = await pool.query(`SELECT COUNT(*) FROM users`);
+
+    res.json({
+      users: users.rows,
+      total: parseInt(total.rows[0].count),
+      page,
+      pages: Math.ceil(total.rows[0].count / limit),
+    });
   } catch (err) {
     console.error("ADMIN USERS ERROR:", err);
     res.status(500).json({ error: "Ошибка получения пользователей" });
@@ -25,33 +40,63 @@ router.get("/users", async (req, res) => {
 });
 
 /* =========================
-   БАН
+   СТАТИСТИКА + РЕГИСТРАЦИИ
 ========================= */
 
-router.put("/ban/:id", async (req, res) => {
+router.get("/stats", async (req, res) => {
+  try {
+    const total = await pool.query(`SELECT COUNT(*) FROM users`);
+    const banned = await pool.query(`SELECT COUNT(*) FROM users WHERE is_banned = true`);
+    const admins = await pool.query(`SELECT COUNT(*) FROM users WHERE role = 'admin'`);
+    const moderators = await pool.query(`SELECT COUNT(*) FROM users WHERE role = 'moderator'`);
+
+    const registration = await pool.query(`
+      SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as date,
+             COUNT(*) as count
+      FROM users
+      WHERE created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY date
+      ORDER BY date ASC
+    `);
+
+    res.json({
+      total: parseInt(total.rows[0].count),
+      banned: parseInt(banned.rows[0].count),
+      admins: parseInt(admins.rows[0].count),
+      moderators: parseInt(moderators.rows[0].count),
+      registration: registration.rows.map(r => ({
+        date: r.date,
+        count: parseInt(r.count),
+      })),
+    });
+  } catch (err) {
+    console.error("STATS ERROR:", err);
+    res.status(500).json({ error: "Ошибка статистики" });
+  }
+});
+
+/* =========================
+   БАН С ПРИЧИНОЙ + ЛОГ
+========================= */
+
+router.post("/ban/:id", async (req, res) => {
   try {
     const userId = req.params.id;
+    const { reason } = req.body;
 
     if (parseInt(userId) === req.user.id) {
       return res.status(400).json({ error: "Нельзя забанить самого себя" });
     }
 
-    if (req.user.role === "moderator") {
-  const target = await pool.query(
-    "SELECT role FROM users WHERE id = $1",
-    [userId]
-  );
-
-  if (target.rows[0]?.role === "admin") {
-    return res.status(403).json({
-      error: "Модератор не может банить администратора",
-    });
-  }
-}
-
     await pool.query(
       "UPDATE users SET is_banned = true WHERE id = $1",
       [userId]
+    );
+
+    await pool.query(
+      `INSERT INTO admin_logs (admin_id, target_id, action, reason)
+       VALUES ($1, $2, $3, $4)`,
+      [req.user.id, userId, "ban", reason || null]
     );
 
     res.json({ success: true });
@@ -62,7 +107,7 @@ router.put("/ban/:id", async (req, res) => {
 });
 
 /* =========================
-   РАЗБАН
+   РАЗБАН + ЛОГ
 ========================= */
 
 router.put("/unban/:id", async (req, res) => {
@@ -74,6 +119,12 @@ router.put("/unban/:id", async (req, res) => {
       [userId]
     );
 
+    await pool.query(
+      `INSERT INTO admin_logs (admin_id, target_id, action)
+       VALUES ($1, $2, $3)`,
+      [req.user.id, userId, "unban"]
+    );
+
     res.json({ success: true });
   } catch (err) {
     console.error("UNBAN ERROR:", err);
@@ -82,96 +133,30 @@ router.put("/unban/:id", async (req, res) => {
 });
 
 /* =========================
-   СДЕЛАТЬ МОДЕРАТОРОМ
+   ЛОГИ
 ========================= */
 
-router.put("/make-moderator/:id", async (req, res) => {
+router.get("/logs", async (req, res) => {
   try {
-    const userId = req.params.id;
+    const logs = await pool.query(`
+      SELECT 
+        al.id,
+        u1.username as admin,
+        u2.username as target,
+        al.action,
+        al.reason,
+        al.created_at
+      FROM admin_logs al
+      LEFT JOIN users u1 ON al.admin_id = u1.id
+      LEFT JOIN users u2 ON al.target_id = u2.id
+      ORDER BY al.created_at DESC
+      LIMIT 50
+    `);
 
-    await pool.query(
-      "UPDATE users SET role = 'moderator' WHERE id = $1",
-      [userId]
-    );
-
-    res.json({ success: true });
+    res.json(logs.rows);
   } catch (err) {
-    console.error("MAKE MOD ERROR:", err);
-    res.status(500).json({ error: "Ошибка назначения модератора" });
-  }
-});
-
-/* =========================
-   СДЕЛАТЬ АДМИНОМ
-========================= */
-
-router.put("/make-admin/:id", async (req, res) => {
-  try {
-    const userId = req.params.id;
-
-    await pool.query(
-      "UPDATE users SET role = 'admin' WHERE id = $1",
-      [userId]
-    );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("MAKE ADMIN ERROR:", err);
-    res.status(500).json({ error: "Ошибка назначения администратора" });
-  }
-});
-
-/* =========================
-   УБРАТЬ РОЛЬ (СДЕЛАТЬ USER)
-========================= */
-
-router.put("/make-user/:id", async (req, res) => {
-  try {
-    const userId = req.params.id;
-
-    await pool.query(
-      "UPDATE users SET role = 'user' WHERE id = $1",
-      [userId]
-    );
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("MAKE USER ERROR:", err);
-    res.status(500).json({ error: "Ошибка изменения роли" });
-  }
-});
-
-/* =========================
-   СТАТИСТИКА
-========================= */
-
-router.get("/stats", async (req, res) => {
-  try {
-    const total = await pool.query(
-      "SELECT COUNT(*) FROM users"
-    );
-
-    const banned = await pool.query(
-      "SELECT COUNT(*) FROM users WHERE is_banned = true"
-    );
-
-    const admins = await pool.query(
-      "SELECT COUNT(*) FROM users WHERE role = 'admin'"
-    );
-
-    const moderators = await pool.query(
-      "SELECT COUNT(*) FROM users WHERE role = 'moderator'"
-    );
-
-    res.json({
-      total: total.rows[0].count,
-      banned: banned.rows[0].count,
-      admins: admins.rows[0].count,
-      moderators: moderators.rows[0].count,
-    });
-  } catch (err) {
-    console.error("STATS ERROR:", err);
-    res.status(500).json({ error: "Ошибка статистики" });
+    console.error("LOGS ERROR:", err);
+    res.status(500).json({ error: "Ошибка логов" });
   }
 });
 

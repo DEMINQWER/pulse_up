@@ -1,185 +1,171 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 export default function AdminPage() {
   const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [onlyBanned, setOnlyBanned] = useState(false);
   const [activeTab, setActiveTab] = useState("users");
+
+  const token =
+    typeof window !== "undefined" && localStorage.getItem("token");
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [page]);
 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-
-      const [usersData, statsData] = await Promise.all([
-        apiRequest("/admin/users", "GET", null, token),
+      const [usersData, statsData, logsData] = await Promise.all([
+        apiRequest(`/admin/users?page=${page}&limit=10`, "GET", null, token),
         apiRequest("/admin/stats", "GET", null, token),
+        apiRequest("/admin/logs", "GET", null, token),
       ]);
 
-      setUsers(usersData);
+      setUsers(usersData.users || usersData);
       setStats(statsData);
+      setLogs(logsData);
     } catch (err) {
-      alert("Ошибка загрузки админ панели");
+      alert("Ошибка загрузки");
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredUsers = useMemo(() => {
-    return users
-      .filter((u) =>
-        u.username?.toLowerCase().includes(search.toLowerCase())
-      )
-      .filter((u) =>
-        roleFilter === "all" ? true : u.role === roleFilter
-      )
-      .filter((u) => (onlyBanned ? u.is_banned : true));
-  }, [users, search, roleFilter, onlyBanned]);
+  const banUser = async (id) => {
+    const reason = prompt("Причина бана:");
+    if (!reason) return;
 
-  const token = typeof window !== "undefined" && localStorage.getItem("token");
-
-  const action = async (url) => {
-    await apiRequest(url, "PUT", null, token);
+    await apiRequest(`/admin/ban/${id}`, "POST", { reason }, token);
     loadAll();
   };
 
-  if (loading) {
-    return <div className="center">Загрузка админ панели...</div>;
-  }
+  const unbanUser = async (id) => {
+    await apiRequest(`/admin/unban/${id}`, "PUT", null, token);
+    loadAll();
+  };
+
+  const makeAdmin = async (id) => {
+    await apiRequest(`/admin/make-admin/${id}`, "PUT", null, token);
+    loadAll();
+  };
+
+  if (loading) return <div className="center">Загрузка...</div>;
+
+  const chartData = {
+    labels: stats?.registration?.map((r) => r.date) || [],
+    datasets: [
+      {
+        label: "Регистрации",
+        data: stats?.registration?.map((r) => r.count) || [],
+      },
+    ],
+  };
 
   return (
     <div className="profile-wrapper">
       <div className="profile-card glass">
 
-        <h2 style={{ marginBottom: "20px" }}>👑 PULSE Admin</h2>
+        <h2>👑 PULSE Enterprise Admin</h2>
 
-        {/* ===== ВКЛАДКИ ===== */}
-        <div style={{ display: "flex", gap: "15px", marginBottom: "20px" }}>
+        <div style={{ display: "flex", gap: "15px", margin: "20px 0" }}>
           <button onClick={() => setActiveTab("users")}>Пользователи</button>
-          <button onClick={() => setActiveTab("reports")}>Жалобы</button>
+          <button onClick={() => setActiveTab("logs")}>Логи</button>
         </div>
 
-        {/* ===== СТАТИСТИКА ===== */}
-        {stats && activeTab === "users" && (
-          <div
-            className="glass"
-            style={{
-              padding: "20px",
-              marginBottom: "25px",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-              gap: "15px",
-              textAlign: "center",
-            }}
-          >
-            <div>
-              <h3>{stats.total}</h3>
-              <small>Всего</small>
-            </div>
-            <div>
-              <h3>{stats.admins}</h3>
-              <small>Админы</small>
-            </div>
-            <div>
-              <h3>{stats.moderators}</h3>
-              <small>Модераторы</small>
-            </div>
-            <div>
-              <h3>{stats.banned}</h3>
-              <small>Забанены</small>
-            </div>
-          </div>
-        )}
-
-        {/* ===== ПОЛЬЗОВАТЕЛИ ===== */}
+        {/* ===== USERS ===== */}
         {activeTab === "users" && (
           <>
-            {/* Поиск и фильтры */}
-            <div style={{ marginBottom: "20px", display: "flex", gap: "10px", flexWrap: "wrap" }}>
-              <input
-                placeholder="Поиск по username..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            {stats && (
+              <>
+                <div className="glass" style={{ padding: 20, marginBottom: 20 }}>
+                  <div>Всего: {stats.total}</div>
+                  <div>Админы: {stats.admins}</div>
+                  <div>Модераторы: {stats.moderators}</div>
+                  <div>Забанены: {stats.banned}</div>
+                </div>
 
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-              >
-                <option value="all">Все роли</option>
-                <option value="admin">Admin</option>
-                <option value="moderator">Moderator</option>
-                <option value="user">User</option>
-              </select>
+                <div className="glass" style={{ padding: 20, marginBottom: 20 }}>
+                  <Bar data={chartData} />
+                </div>
+              </>
+            )}
 
-              <label>
-                <input
-                  type="checkbox"
-                  checked={onlyBanned}
-                  onChange={() => setOnlyBanned(!onlyBanned)}
-                />
-                Только забаненные
-              </label>
-            </div>
-
-            {filteredUsers.map((user) => (
+            {users.map((user) => (
               <div key={user.id} className="admin-user glass">
                 <div>
                   <b>@{user.username}</b>
-                  <div style={{ fontSize: "12px", opacity: 0.6 }}>
-                    {user.email}
-                  </div>
-                  <div style={{ fontSize: "12px" }}>
-                    Роль: {user.role}
-                  </div>
-                  <div style={{ fontSize: "12px" }}>
+                  <div>{user.email}</div>
+                  <div>Роль: {user.role}</div>
+                  <div>
                     Статус: {user.is_banned ? "🚫 Заблокирован" : "✅ Активен"}
                   </div>
                 </div>
 
-                <div className="admin-actions">
+                <div>
                   {!user.is_banned ? (
-                    <button onClick={() => action(`/admin/ban/${user.id}`)}>
+                    <button onClick={() => banUser(user.id)}>
                       Забанить
                     </button>
                   ) : (
-                    <button onClick={() => action(`/admin/unban/${user.id}`)}>
+                    <button onClick={() => unbanUser(user.id)}>
                       Разбанить
                     </button>
                   )}
 
                   {user.role !== "admin" && (
-                    <button onClick={() => action(`/admin/make-admin/${user.id}`)}>
+                    <button onClick={() => makeAdmin(user.id)}>
                       Сделать админом
                     </button>
                   )}
                 </div>
               </div>
             ))}
+
+            {/* ===== PAGINATION ===== */}
+            <div style={{ marginTop: 20 }}>
+              <button disabled={page === 1} onClick={() => setPage(page - 1)}>
+                Назад
+              </button>
+              <span style={{ margin: "0 10px" }}>Страница {page}</span>
+              <button onClick={() => setPage(page + 1)}>
+                Вперёд
+              </button>
+            </div>
           </>
         )}
 
-        {/* ===== ЖАЛОБЫ (заготовка) ===== */}
-        {activeTab === "reports" && (
-          <div className="glass" style={{ padding: "20px" }}>
-            <h3>Жалобы пользователей</h3>
-            <p style={{ opacity: 0.6 }}>
-              Здесь будут отображаться жалобы.
-              Нужно добавить backend endpoint /admin/reports
-            </p>
+        {/* ===== LOGS ===== */}
+        {activeTab === "logs" && (
+          <div className="glass" style={{ padding: 20 }}>
+            <h3>Логи действий</h3>
+            {logs.map((log) => (
+              <div key={log.id} style={{ marginBottom: 10 }}>
+                <b>{log.admin}</b> → {log.action} → @{log.target}
+                <div style={{ fontSize: 12, opacity: 0.6 }}>
+                  {log.created_at}
+                </div>
+              </div>
+            ))}
           </div>
         )}
+
       </div>
     </div>
   );
