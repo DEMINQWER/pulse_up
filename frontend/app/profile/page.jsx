@@ -47,9 +47,9 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-wrapper">
-      <div className="profile-card">
+      <div className="profile-card glass">
 
-        {/* ===== АВАТАР ===== */}
+        {/* АВАТАР */}
         <div className="avatar-box">
           {user.avatar_url ? (
             <img
@@ -62,13 +62,15 @@ export default function ProfilePage() {
               {user.username?.[0]?.toUpperCase()}
             </div>
           )}
+          <h2 className="username">
+            @{user.username}
+            {user.role === "admin" && <span className="crown"> 👑</span>}
+          </h2>
         </div>
 
-        {/* ===== ИНФОРМАЦИЯ ===== */}
-
+        {/* ПРОСМОТР */}
         {!editMode ? (
-          <>
-            <InfoBlock title="Имя пользователя" value={`@${user.username}`} />
+          <div className="fade-in">
             <InfoBlock title="Email" value={user.email} />
             <InfoBlock title="Никнейм" value={user.nickname || "—"} />
             <InfoBlock title="Дата рождения" value={user.birthdate || "—"} />
@@ -78,18 +80,11 @@ export default function ProfilePage() {
             <button onClick={() => setEditMode(true)}>
               Редактировать профиль
             </button>
-          </>
+          </div>
         ) : (
-          <div className="edit-panel">
+          <div className="edit-panel slide-up">
             <h3>Редактирование профиля</h3>
 
-            <input
-              placeholder="Имя пользователя"
-              value={form.username || ""}
-              onChange={(e) =>
-                setForm({ ...form, username: e.target.value })
-              }
-            />
             <input
               placeholder="Email"
               value={form.email || ""}
@@ -135,17 +130,14 @@ export default function ProfilePage() {
         <button className="logout-btn" onClick={logout}>
           Выйти
         </button>
-
       </div>
     </div>
   );
 }
 
-/* ===== КОМПОНЕНТ ПЛАШКИ ===== */
-
 function InfoBlock({ title, value }) {
   return (
-    <div className="info-block">
+    <div className="info-block glass">
       <span className="info-title">{title}</span>
       <span className="info-value">{value}</span>
     </div>
