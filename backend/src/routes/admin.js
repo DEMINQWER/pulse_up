@@ -5,7 +5,7 @@ const auth = require("../middleware/auth");
 const role = require("../middleware/role");
 
 router.use(auth);
-router.use(role(["admin, moderator"]));
+router.use(role(["admin", "moderator"]));
 
 /* =========================
    ПОЛУЧИТЬ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ
