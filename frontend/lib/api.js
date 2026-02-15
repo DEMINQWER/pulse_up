@@ -1,39 +1,22 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://pulse-9ui4.onrender.com";
 
-export async function apiRequest(
-  endpoint,
-  method = "GET",
-  body = null,
-  token = null
-) {
-  if (!API_URL) {
-    throw new Error("NEXT_PUBLIC_API_URL не задан");
-  }
+export async function apiRequest(endpoint, method = "GET", body = null, token = null) {
 
-  const url = `${API_URL}${
-    endpoint.startsWith("/") ? endpoint : "/" + endpoint
-  }`;
-
-  const options = {
+  const res = await fetch(`${API_URL}${endpoint}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token && { Authorization: `Bearer ${token}` })
     },
-  };
+    ...(body && { body: JSON.stringify(body) })
+  });
 
-  if (body) {
-    options.body = JSON.stringify(body);
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Ошибка запроса");
   }
 
-  const response = await fetch(url, options);
-
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
-
-  if (!response.ok) {
-    throw new Error(data.error || "Ошибка API");
-  }
-
-  return data;
+  return res.json();
 }
