@@ -46,11 +46,10 @@ async function initDB() {
     /* ========= MAKE FIRST USER ADMIN ========= */
 
     await pool.query(`
-      UPDATE users
-      SET role = 'admin'
-      WHERE email = lioasq.joude@mail.ru
-    `);
-
+  UPDATE users
+  SET role = 'admin'
+  WHERE email = 'lioasq.joude@mail.ru'
+`);
     /* ========= FRIENDS ========= */
 
     await pool.query(`
