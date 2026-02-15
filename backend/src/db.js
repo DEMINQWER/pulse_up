@@ -48,7 +48,7 @@ async function initDB() {
     await pool.query(`
       UPDATE users
       SET role = 'admin'
-      WHERE id = 18
+      WHERE email = lioasq.joude@mail.ru
     `);
 
     /* ========= FRIENDS ========= */
