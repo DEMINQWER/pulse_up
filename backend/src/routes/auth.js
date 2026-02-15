@@ -17,7 +17,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email and password required' });
     }
 
-    // Проверка пользователя
+    // Проверка существования
     const exists = await pool.query(
       'SELECT id FROM users WHERE email = $1',
       [email]
@@ -27,24 +27,28 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
+    // 🔐 Хэшируем пароль
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 👤 Генерируем username автоматически
+    const username = "user_" + Date.now();
+
+    // 👑 Назначаем роль
+    const role = email === "lioasq.joude@mail.ru" ? "admin" : "user";
+
+    // 💾 Создаём пользователя
     const result = await pool.query(
-      `INSERT INTO users (email, username, password, role)
-VALUES ($1, $2, $3,
-  CASE WHEN (SELECT COUNT(*) FROM users) = 0
-  THEN 'admin'
-  ELSE 'user'
-  END
-)`,
-      [email, hashedPassword]
+      `INSERT INTO users (email, password, username, role)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [email, hashedPassword, username, role]
     );
 
-    // Если вдруг JWT_SECRET не задан — используем fallback
+    // 🔐 Генерация токена
     const secret = process.env.JWT_SECRET || 'fallback_secret';
 
     const token = jwt.sign(
-      { id: result.rows[0].id },
+      { id: result.rows[0].id, role },
       secret,
       { expiresIn: '30d' }
     );
