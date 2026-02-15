@@ -37,7 +37,6 @@ router.post('/register', async (req, res) => {
     const role = email === "lioasq.joude@mail.ru" ? "admin" : "user";
 
     // 💾 Создаём пользователя
-    const isAdminEmail = email === "lioasq.joude@mail.ru";
 const role = isAdminEmail ? "admin" : "user";
 
 const result = await pool.query(
