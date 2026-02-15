@@ -1,59 +1,67 @@
+require('dotenv').config();
 const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const { pool } = require('../db');
+const cors = require('cors');
+const { initDB } = require('./db');
+const path = require('path');
+
+const app = express();
 
 /* =========================
-   GET CURRENT USER
+   CORS ONLY FOR RENDER
 ========================= */
 
-router.get('/me', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
+app.use(cors({
+  origin: "https://pulse-front-goe7.onrender.com",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
-    if (!authHeader) {
-      return res.status(401).json({ error: "No token provided" });
-    }
+/* ========================= */
 
-    const token = authHeader.split(" ")[1];
+app.use(express.json());
 
-    if (!token) {
-      return res.status(401).json({ error: "Invalid token format" });
-    }
+app.use('/uploads', express.static(
+  path.join(__dirname, '../uploads')
+));
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+app.set('etag', false);
 
-    const result = await pool.query(
-      "SELECT id, username, role, avatar_url FROM users WHERE id = $1",
-      [decoded.id]
-    );
+/* ===== ROUTES ===== */
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "User not found" });
-    }
+app.use('/auth', require('./routes/auth'));
+app.use('/chats', require('./routes/chats'));
+app.use('/messages', require('./routes/messages'));
+app.use('/admin', require('./routes/admin'));
+app.use('/friends', require('./routes/friends'));
+app.use('/users', require('./routes/users'));
 
-    const user = result.rows[0];
+/* =========================
+   ROOT CHECK (ВАЖНО)
+========================= */
 
-    /* =========================
-       FIX AVATAR FULL URL
-    ========================= */
-
-    if (user.avatar_url) {
-      const BASE_URL =
-        process.env.BASE_URL ||
-        "https://pulse-9ui4.onrender.com";
-
-      if (!user.avatar_url.startsWith("http")) {
-        user.avatar_url = `${BASE_URL}${user.avatar_url}`;
-      }
-    }
-
-    res.json(user);
-
-  } catch (error) {
-    console.error("GET /users/me ERROR:", error);
-    res.status(401).json({ error: "Invalid or expired token" });
-  }
+app.get('/', (req, res) => {
+  res.status(200).json({ status: "API is working" });
 });
 
-module.exports = router;
+/* =========================
+   GLOBAL ERROR HANDLER
+========================= */
+
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
+/* ========================= */
+
+initDB()
+  .then(() => {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server started on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("DB INIT ERROR:", err);
+  });
