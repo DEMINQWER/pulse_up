@@ -8,10 +8,6 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
 
-  // ✅ новые state
-  const [newUserId, setNewUserId] = useState('')
-  const [showAddUser, setShowAddUser] = useState(false)
-
   const token =
     typeof window !== 'undefined'
       ? localStorage.getItem('token')
@@ -30,26 +26,26 @@ export default function ChatPage() {
           Authorization: `Bearer ${token}`,
         },
       }
-    );
+    )
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!Array.isArray(data)) {
-      setMessages([]);
-      return;
+      setMessages([])
+      return
     }
 
     const userId = JSON.parse(
       atob(token.split('.')[1])
-    ).id;
+    ).id
 
-    const formattedMessages = data.map((msg) => ({
+    const formatted = data.map((msg) => ({
       ...msg,
       isMine: msg.user_id === userId,
-    }));
+    }))
 
-    setMessages(formattedMessages);
-  };
+    setMessages(formatted)
+  }
 
   const sendMessage = async () => {
     if (!text.trim()) return
@@ -70,61 +66,13 @@ export default function ChatPage() {
     loadMessages()
   }
 
-  // ✅ добавление участника
-  const addUser = async () => {
-    if (!newUserId.trim()) return
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/chats/${id}/users`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId: newUserId }),
-      }
-    )
-
-    if (res.ok) {
-      setNewUserId('')
-      setShowAddUser(false)
-      alert('Пользователь добавлен')
-    } else {
-      alert('Ошибка или вы не владелец группы')
-    }
-  }
-
   return (
     <div className="chat-container">
-      
-      {/* HEADER */}
-      <div className="chat-header">
-        <span>Chat #{id}</span>
 
-        <button
-          onClick={() => setShowAddUser(!showAddUser)}
-          style={{ marginLeft: 10 }}
-        >
-          ➕
-        </button>
+      <div className="chat-header">
+        <span>Диалог #{id}</span>
       </div>
 
-      {/* Форма добавления участника */}
-      {showAddUser && (
-        <div style={{ padding: 10 }}>
-          <input
-            value={newUserId}
-            onChange={(e) => setNewUserId(e.target.value)}
-            placeholder="Введите ID пользователя"
-          />
-          <button onClick={addUser} style={{ marginLeft: 5 }}>
-            Добавить
-          </button>
-        </div>
-      )}
-
-      {/* MESSAGES */}
       <div className="chat-messages">
         {messages.map((msg) => (
           <div
@@ -140,17 +88,14 @@ export default function ChatPage() {
         ))}
       </div>
 
-      {/* INPUT */}
       <div className="chat-input">
-        <button className="attach-btn">📎</button>
-
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Введите сообщение..."
         />
 
-        <button onClick={sendMessage} className="send-btn">
+        <button onClick={sendMessage}>
           ➤
         </button>
       </div>

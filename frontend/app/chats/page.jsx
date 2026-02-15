@@ -19,12 +19,18 @@ export default function Chats() {
 
   return (
     <div className="page">
-      <h2>Чаты</h2>
+      <h2>💬 Чаты</h2>
+
+      {chats.length === 0 && (
+        <div style={{ opacity: 0.6 }}>
+          У вас пока нет диалогов
+        </div>
+      )}
 
       {chats.map(chat => (
         <Link key={chat.id} href={`/chats/${chat.id}`}>
           <div className="chat-item">
-            Чат #{chat.id}
+            Диалог #{chat.id}
           </div>
         </Link>
       ))}

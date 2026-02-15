@@ -49,25 +49,22 @@ router.get("/me", async (req, res) => {
       [decoded.id]
     );
 
-    if (result.rows.length === 0) {
+    if (!result.rows.length) {
       return res.status(404).json({ error: "User not found" });
     }
 
     const user = result.rows[0];
 
-    if (user.avatar_url) {
+    if (user.avatar_url && !user.avatar_url.startsWith("http")) {
       const BASE_URL =
         process.env.BASE_URL ||
         "https://pulse-9ui4.onrender.com";
 
-      if (!user.avatar_url.startsWith("http")) {
-        user.avatar_url = `${BASE_URL}${user.avatar_url}`;
-      }
+      user.avatar_url = `${BASE_URL}${user.avatar_url}`;
     }
 
     res.json(user);
   } catch (error) {
-    console.error("GET /me ERROR:", error);
     res.status(401).json({ error: error.message });
   }
 });
@@ -76,11 +73,20 @@ router.get("/me", async (req, res) => {
    UPDATE PROFILE
 ========================= */
 
-router.put("/update", async (req, res) => {
+router.put("/me", async (req, res) => {
   try {
     const decoded = auth(req);
-
     const { username, email, nickname, birthdate, phone } = req.body;
+
+    // Проверка уникальности username
+    const check = await pool.query(
+      "SELECT id FROM users WHERE username = $1 AND id != $2",
+      [username, decoded.id]
+    );
+
+    if (check.rows.length > 0) {
+      return res.status(400).json({ error: "Username already taken" });
+    }
 
     const result = await pool.query(
       `UPDATE users 
@@ -92,7 +98,50 @@ router.put("/update", async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error("UPDATE PROFILE ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* =========================
+   DELETE ACCOUNT
+========================= */
+
+router.delete("/me", async (req, res) => {
+  try {
+    const decoded = auth(req);
+
+    await pool.query("DELETE FROM users WHERE id = $1", [decoded.id]);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* =========================
+   SEARCH USERS
+========================= */
+
+router.get("/search", async (req, res) => {
+  try {
+    const decoded = auth(req);
+    const { username } = req.query;
+
+    if (!username) {
+      return res.status(400).json({ error: "Username query required" });
+    }
+
+    const result = await pool.query(
+      `SELECT id, username, nickname, avatar_url 
+       FROM users
+       WHERE username ILIKE $1
+       AND id != $2
+       LIMIT 20`,
+      [`%${username}%`, decoded.id]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -124,25 +173,7 @@ router.post("/avatar", upload.single("avatar"), async (req, res) => {
       avatar_url: `${BASE_URL}${avatarPath}`,
     });
   } catch (err) {
-    console.error("UPLOAD AVATAR ERROR:", err);
     res.status(500).json({ error: err.message });
-  }
-});
-
-/* =========================
-   TEMP FIX USERNAME
-========================= */
-
-router.get("/fix-username", async (req, res) => {
-  try {
-    await pool.query(
-      "UPDATE users SET username = 'admin18' WHERE id = 18"
-    );
-
-    res.json({ message: "Username fixed" });
-  } catch (error) {
-    console.error("FIX USERNAME ERROR:", error);
-    res.status(500).json({ error: error.message });
   }
 });
 

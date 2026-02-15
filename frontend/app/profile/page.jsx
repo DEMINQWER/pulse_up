@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api";
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     loadProfile();
@@ -13,11 +15,16 @@ export default function ProfilePage() {
   const loadProfile = async () => {
     try {
       const token = localStorage.getItem("token");
-      const data = await apiRequest("/auth/me", "GET", null, token);
+      const data = await apiRequest("/users/me", "GET", null, token);
       setUser(data);
     } catch (err) {
       console.error("PROFILE ERROR:", err);
     }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    router.push("/login");
   };
 
   if (!user) {
@@ -69,11 +76,27 @@ export default function ProfilePage() {
         {user.role === "admin" && (
           <button
             style={{ marginTop: "20px" }}
-            onClick={() => (window.location.href = "/admin")}
+            onClick={() => router.push("/admin")}
           >
             👑 Админ панель
           </button>
         )}
+
+        {/* КНОПКА ВЫХОДА */}
+        <button
+          onClick={logout}
+          style={{
+            marginTop: "20px",
+            padding: "10px 15px",
+            background: "#ff4d4f",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer"
+          }}
+        >
+          🚪 Выйти из аккаунта
+        </button>
 
       </div>
     </div>
