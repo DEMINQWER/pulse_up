@@ -24,19 +24,29 @@ export default function EditProfilePage() {
   const loadProfile = async () => {
     try {
       const token = localStorage.getItem("token");
-      const data = await apiRequest("/auth/me", "GET", null, token);
+
+      const data = await apiRequest(
+        "/users/me",
+        "GET",
+        null,
+        token
+      );
 
       setForm({
         username: data.username || "",
         email: data.email || "",
         nickname: data.nickname || "",
         phone: data.phone || "",
-        birthdate: data.birthdate || ""
+        birthdate: data.birthdate
+          ? data.birthdate.split("T")[0]
+          : ""
       });
 
       setLoading(false);
+
     } catch (err) {
       console.error("LOAD PROFILE ERROR:", err);
+      setLoading(false);
     }
   };
 
@@ -55,13 +65,13 @@ export default function EditProfilePage() {
       const token = localStorage.getItem("token");
 
       await apiRequest(
-        "/users/update",
+        "/users/me",
         "PUT",
         {
           username: form.username,
           nickname: form.nickname,
           phone: form.phone,
-          birthdate: form.birthdate
+          birthdate: form.birthdate || null
         },
         token
       );
