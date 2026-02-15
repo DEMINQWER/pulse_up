@@ -9,7 +9,11 @@ const auth = require('../middleware/auth');
 
 router.get('/:chatId', auth, async (req, res) => {
   try {
-    const { chatId } = req.params;
+    const chatId = parseInt(req.params.chatId);
+
+    if (!chatId) {
+      return res.status(400).json({ error: "Invalid chat id" });
+    }
 
     // Проверяем существование чата
     const chatExists = await pool.query(
@@ -23,10 +27,7 @@ router.get('/:chatId', auth, async (req, res) => {
 
     // Проверяем что пользователь участник
     const accessCheck = await pool.query(
-      `
-      SELECT 1 FROM chat_users
-      WHERE chat_id = $1 AND user_id = $2
-      `,
+      `SELECT 1 FROM chat_users WHERE chat_id = $1 AND user_id = $2`,
       [chatId, req.user.id]
     );
 
@@ -36,7 +37,7 @@ router.get('/:chatId', auth, async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT id, user_id, content, file_url, created_at
+      SELECT *
       FROM messages
       WHERE chat_id = $1
       ORDER BY created_at ASC
@@ -53,14 +54,19 @@ router.get('/:chatId', auth, async (req, res) => {
   }
 });
 
+
 /* =========================
    SEND MESSAGE
 ========================= */
 
 router.post('/:chatId', auth, async (req, res) => {
   try {
-    const { chatId } = req.params;
+    const chatId = parseInt(req.params.chatId);
     const { content } = req.body;
+
+    if (!chatId) {
+      return res.status(400).json({ error: "Invalid chat id" });
+    }
 
     if (!content || !content.trim()) {
       return res.status(400).json({ error: "Message content required" });
@@ -78,10 +84,7 @@ router.post('/:chatId', auth, async (req, res) => {
 
     // Проверяем участие пользователя
     const accessCheck = await pool.query(
-      `
-      SELECT 1 FROM chat_users
-      WHERE chat_id = $1 AND user_id = $2
-      `,
+      `SELECT 1 FROM chat_users WHERE chat_id = $1 AND user_id = $2`,
       [chatId, req.user.id]
     );
 
@@ -93,7 +96,7 @@ router.post('/:chatId', auth, async (req, res) => {
       `
       INSERT INTO messages (chat_id, user_id, content)
       VALUES ($1, $2, $3)
-      RETURNING id, user_id, content, file_url, created_at
+      RETURNING *
       `,
       [chatId, req.user.id, content.trim()]
     );
