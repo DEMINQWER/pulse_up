@@ -34,16 +34,16 @@ router.post('/register', async (req, res) => {
     const username = "user_" + Date.now();
 
     // 👑 Назначаем роль
-    const role = email === "lioasq.joude@mail.ru" ? "admin" : "user";
-
-    // 💾 Создаём пользователя
+const isAdminEmail = email === "lioasq.joude@mail.ru";
 const role = isAdminEmail ? "admin" : "user";
 
+// 💾 Создаём пользователя
 const result = await pool.query(
   `INSERT INTO users (email, password, username, role)
    VALUES ($1, $2, $3, $4)
    RETURNING id, email, role`,
   [email, hashedPassword, username, role]
+);
 );
 
     // 🔐 Генерация токена
