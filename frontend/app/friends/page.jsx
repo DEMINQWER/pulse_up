@@ -83,7 +83,7 @@ export default function Friends() {
         {friends.map((friend) => (
           <div key={friend.id} className="friend-item">
             <span>@{friend.username}</span>
-            <button onClick={() => startCha(friend.id)}>
+            <button onClick={() => startChat(friend.id)}>
               Открыть чат
             </button>
           </div>
