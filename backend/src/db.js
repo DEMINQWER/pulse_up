@@ -35,7 +35,18 @@ async function initDB() {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;`);
 
-   
+    /* =======================================================
+       ⚠️⚠️⚠️ TEMP DEV CODE — DELETE ALL USERS (REMOVE AFTER USE)
+       ЭТО УДАЛИТ ВСЕХ ПОЛЬЗОВАТЕЛЕЙ И СБРОСИТ ID
+       ======================================================= */
+
+    await pool.query(`TRUNCATE TABLE users RESTART IDENTITY CASCADE;`);
+    console.log("🔥 TEMP: ALL USERS DELETED — REMOVE THIS BLOCK!");
+
+    /* =======================================================
+       ⚠️⚠️⚠️ END TEMP DELETE BLOCK
+       ======================================================= */
+
     /* ========= FIX BROKEN USERNAMES ========= */
 
     await pool.query(`
