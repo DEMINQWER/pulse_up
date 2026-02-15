@@ -18,7 +18,7 @@ export default function ProfilePage() {
       const data = await apiRequest("/users/me", "GET", null, token);
       setUser(data);
     } catch (err) {
-      console.error("PROFILE ERROR:", err);
+      console.error(err);
     }
   };
 
@@ -27,75 +27,56 @@ export default function ProfilePage() {
     router.push("/login");
   };
 
-  if (!user) {
-    return <div className="center">Загрузка профиля...</div>;
-  }
+  const deleteAccount = async () => {
+    const token = localStorage.getItem("token");
+    if (!confirm("Вы точно хотите удалить аккаунт?")) return;
+
+    await apiRequest("/users/delete", "DELETE", null, token);
+    localStorage.removeItem("token");
+    router.push("/login");
+  };
+
+  if (!user) return <div>Загрузка...</div>;
 
   return (
     <div className="profile-wrapper">
       <div className="profile-card glass">
 
-        <h2 style={{ marginBottom: "20px" }}>
-          👤 Профиль
-        </h2>
+        <h2>👤 Профиль</h2>
 
         <div className="profile-field glass">
-          <span>Username</span>
-          <b>@{user.username}</b>
+          <span>@{user.username}</span>
         </div>
 
         <div className="profile-field glass">
-          <span>Email</span>
-          <b>{user.email}</b>
-        </div>
-
-        <div className="profile-field glass">
-          <span>Никнейм</span>
-          <b>{user.nickname || "Не указан"}</b>
-        </div>
-
-        <div className="profile-field glass">
-          <span>Дата рождения</span>
-          <b>{user.birthdate || "Не указана"}</b>
-        </div>
-
-        <div className="profile-field glass">
-          <span>Телефон</span>
-          <b>{user.phone || "Не указан"}</b>
-        </div>
-
-        <div className="profile-field glass">
-          <span>Роль</span>
-          <b>
-            {user.role === "admin" && "👑 Администратор"}
-            {user.role === "moderator" && "🛡 Модератор"}
-            {user.role === "user" && "Пользователь"}
-          </b>
+          <span>{user.email}</span>
         </div>
 
         {user.role === "admin" && (
-          <button
-            style={{ marginTop: "20px" }}
-            onClick={() => router.push("/admin")}
-          >
+          <button onClick={() => router.push("/admin")}>
             👑 Админ панель
           </button>
         )}
 
-        {/* КНОПКА ВЫХОДА */}
-        <button
-          onClick={logout}
-          style={{
-            marginTop: "20px",
-            padding: "10px 15px",
-            background: "#ff4d4f",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer"
-          }}
-        >
+        {user.role === "moderator" && (
+          <button onClick={() => router.push("/moderator")}>
+            🛡 Панель модератора
+          </button>
+        )}
+
+        <button onClick={() => router.push("/profile/edit")}>
+          ✏ Редактировать профиль
+        </button>
+
+        <button onClick={logout}>
           🚪 Выйти из аккаунта
+        </button>
+
+        <button
+          onClick={deleteAccount}
+          style={{ background: "#ff4d4f", color: "white" }}
+        >
+          🗑 Удалить аккаунт
         </button>
 
       </div>
