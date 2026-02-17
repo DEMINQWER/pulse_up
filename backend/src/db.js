@@ -1,12 +1,32 @@
+require("dotenv").config();
 const { Pool } = require("pg");
+
+if (!process.env.DATABASE_URL) {
+  console.error("❌ DATABASE_URL not found in .env");
+  process.exit(1);
+}
+
+console.log("🔎 DATABASE_URL loaded");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+pool.on("connect", () => {
+  console.log("✅ PostgreSQL connected");
+});
+
+pool.on("error", (err) => {
+  console.error("❌ Unexpected PG error:", err);
 });
 
 async function initDB() {
   try {
+    await pool.query("SELECT 1");
+    console.log("✅ Database connection successful");
 
     /* ========= USERS ========= */
 
@@ -27,31 +47,16 @@ async function initDB() {
       );
     `);
 
-    /* ========= SAFE MIGRATIONS ========= */
-
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname TEXT;`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate TEXT;`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT false;`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT;`);
-    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
-
-    /* ========= FIX BROKEN USERNAMES ========= */
-
     await pool.query(`
       UPDATE users
       SET username = 'user' || id
       WHERE username IS NULL OR username = '';
     `);
 
-    /* ========= MAKE ADMIN ========= */
-
     await pool.query(`
       UPDATE users
       SET role = 'admin'
-      WHERE email = 'lioasq.joude@mail.ru'
+      WHERE email = 'lioasq.joude@mail.ru';
     `);
 
     /* ========= FRIENDS ========= */
@@ -98,6 +103,17 @@ async function initDB() {
       );
     `);
 
+    // 🔥 Гарантируем что колонка content существует
+    await pool.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS content TEXT;
+    `);
+
+    await pool.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS file_url TEXT;
+    `);
+
     /* ========= REPORTS ========= */
 
     await pool.query(`
@@ -124,47 +140,10 @@ async function initDB() {
       );
     `);
 
-    /* ========= PERFORMANCE INDEXES ========= */
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_users_created_at
-      ON users(created_at);
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_admin_logs_created_at
-      ON admin_logs(created_at);
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_reports_target
-      ON reports(target_id);
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_chat_users_user
-      ON chat_users(user_id);
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_chat_users_chat
-      ON chat_users(chat_id);
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_messages_chat
-      ON messages(chat_id);
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_messages_created
-      ON messages(created_at);
-    `);
-
     console.log("✅ Database ready");
-
   } catch (err) {
     console.error("❌ DB INIT ERROR:", err);
+    throw err;
   }
 }
 
