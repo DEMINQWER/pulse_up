@@ -1,10 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useEffect, useState, useRef } from "react"
+import { useParams, useRouter } from "next/navigation"
 
 export default function ChatPage() {
   const { id } = useParams()
+  const router = useRouter()
+  const messagesEndRef = useRef(null)
 
   const [messages, setMessages] = useState([])
   const [text, setText] = useState("")
@@ -31,15 +33,17 @@ export default function ChatPage() {
     loadChatInfo()
   }, [id, userId])
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
   const loadChatInfo = async () => {
     const token = localStorage.getItem("token")
     if (!token) return
 
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/chats/${id}`,
-      {
-        headers: { Authorization: `Bearer ${token}` }
-      }
+      { headers: { Authorization: `Bearer ${token}` } }
     )
 
     if (!res.ok) return
@@ -49,97 +53,80 @@ export default function ChatPage() {
   }
 
   const loadMessages = async () => {
-    try {
-      setLoading(true)
+    setLoading(true)
 
-      const token = localStorage.getItem("token")
-      if (!token) return
+    const token = localStorage.getItem("token")
+    if (!token) return
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
 
-      if (!res.ok) {
-        setMessages([])
-        setLoading(false)
-        return
-      }
-
-      const data = await res.json()
-
-      const formatted = data.map((msg) => ({
-        ...msg,
-        isMine: msg.user_id === userId,
-      }))
-
-      setMessages(formatted)
+    if (!res.ok) {
+      setMessages([])
       setLoading(false)
-
-    } catch (err) {
-      console.error("Load messages error:", err)
-      setLoading(false)
+      return
     }
+
+    const data = await res.json()
+
+    const formatted = data.map((msg) => ({
+      ...msg,
+      isMine: msg.user_id === userId,
+    }))
+
+    setMessages(formatted)
+    setLoading(false)
   }
 
   const sendMessage = async () => {
     if (!text.trim() || sending) return
 
-    try {
-      setSending(true)
+    setSending(true)
 
-      const token = localStorage.getItem("token")
+    const token = localStorage.getItem("token")
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ content: text }),
-        }
-      )
-
-      if (!res.ok) {
-        setSending(false)
-        return
-      }
-
-      const newMessage = await res.json()
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          ...newMessage,
-          isMine: true,
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      ])
+        body: JSON.stringify({ content: text }),
+      }
+    )
 
-      setText("")
+    if (!res.ok) {
       setSending(false)
-
-    } catch (err) {
-      console.error("Send error:", err)
-      setSending(false)
+      return
     }
+
+    const newMessage = await res.json()
+
+    setMessages(prev => [
+      ...prev,
+      { ...newMessage, isMine: true }
+    ])
+
+    setText("")
+    setSending(false)
   }
 
   return (
-    <div className="chat-container">
+    <div className="vk-chat-container">
 
-      <div className="chat-header">
-        <span>{chatName || "Загрузка..."}</span>
+      <div className="vk-chat-header">
+        <div className="back-btn" onClick={() => router.back()}>
+          ←
+        </div>
+        {chatName || "Загрузка..."}
       </div>
 
-      <div className="chat-messages">
-
-        {loading && <div>Загрузка...</div>}
+      <div className="vk-messages">
+        {loading && <div style={{ opacity: 0.6 }}>Загрузка...</div>}
 
         {!loading && messages.length === 0 && (
           <div style={{ opacity: 0.6 }}>
@@ -147,33 +134,28 @@ export default function ChatPage() {
           </div>
         )}
 
-        {messages.map((msg) => (
+        {messages.map(msg => (
           <div
             key={msg.id}
-            className={`message ${
-              msg.isMine ? "mine" : "other"
-            }`}
+            className={`vk-message ${msg.isMine ? "mine" : "other"}`}
           >
-            <div className="message-content">
-              {msg.content}
-            </div>
+            {msg.content}
           </div>
         ))}
 
+        <div ref={messagesEndRef} />
       </div>
 
-      <div className="chat-input">
+      <div className="vk-input">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Введите сообщение..."
-          onKeyDown={(e) => {
-            if (e.key === "Enter") sendMessage()
-          }}
+          placeholder="Сообщение..."
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
 
         <button onClick={sendMessage} disabled={sending}>
-          {sending ? "..." : "➤"}
+          ➤
         </button>
       </div>
 

@@ -18,22 +18,39 @@ export default function Chats() {
   }, []);
 
   return (
-    <div className="page">
-      <h2>💬 Чаты</h2>
+    <div className="vk-chats">
 
-      {chats.length === 0 && (
-        <div style={{ opacity: 0.6 }}>
-          У вас пока нет диалогов
-        </div>
-      )}
+      <div className="vk-header">
+        Чаты
+      </div>
 
-      {chats.map(chat => (
-        <Link key={chat.id} href={`/chats/${chat.id}`}>
-          <div className="chat-item">
-            {chat.other_username}
+      <div className="vk-chat-list">
+        {chats.length === 0 && (
+          <div style={{ opacity: 0.6, padding: 20 }}>
+            У вас пока нет диалогов
           </div>
-        </Link>
-      ))}
+        )}
+
+        {chats.map(chat => (
+          <Link key={chat.id} href={`/chats/${chat.id}`}>
+            <div className="vk-chat-item">
+              <div className="avatar">
+                {chat.other_username?.[0]?.toUpperCase()}
+              </div>
+
+              <div>
+                <div className="chat-name">
+                  {chat.other_username}
+                </div>
+                <div className="chat-preview">
+                  Нажмите чтобы открыть диалог
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
     </div>
   );
 }
