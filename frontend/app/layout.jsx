@@ -11,7 +11,7 @@ export default function RootLayout({ children }) {
     <html lang="ru">
       <body>
         <SidebarProvider>
-          
+          {children}
         </SidebarProvider>
       </body>
     </html>
