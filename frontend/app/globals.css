@@ -76,24 +76,28 @@ body {
 /* ===================================================== */
 /* ====================== SIDEBAR ====================== */
 /* ===================================================== */
+/* ===== SIDEBAR ===== */
 
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 240px;
+  width: 260px;
   height: 100vh;
-  background: rgba(20,20,43,0.95);
-  backdrop-filter: blur(25px);
-  border-right: 1px solid var(--border);
-  padding: 80px 20px 20px 20px;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-  z-index: 1100;
+  background: #111;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: 0.3s;
+  z-index: 1000;
 }
 
-.sidebar.open {
-  transform: translateX(0);
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
 }
 
 .menu {
@@ -102,19 +106,22 @@ body {
   gap: 8px;
 }
 
-.menu a {
+.menu a,
+.settings a {
   padding: 12px 14px;
-  border-radius: 14px;
-  transition: 0.25s ease;
+  border-radius: 10px;
+  text-decoration: none;
+  color: white;
+  transition: 0.2s;
 }
 
-.menu a:hover {
-  background: rgba(255,255,255,0.06);
+.menu a:hover,
+.settings a:hover {
+  background: rgba(255,255,255,0.1);
 }
 
-.menu a.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  box-shadow: 0 0 20px rgba(108,76,255,0.4);
+.active {
+  background: rgba(255,255,255,0.15);
 }
 
 /* ===================================================== */
@@ -329,4 +336,52 @@ body.sidebar-open .main-content {
 /* Чтобы overlay не перекрывал sidebar */
 .overlay {
   backdrop-filter: blur(2px);
+}
+
+/* ===== PROFILE ===== */
+
+.profile-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+  min-height: calc(100vh - 60px);
+}
+
+.profile-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 30px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.glass {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.profile-field {
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.profile-card button {
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  background: rgba(255,255,255,0.1);
+  transition: 0.2s;
+}
+
+.profile-card button:hover {
+  background: rgba(255,255,255,0.2);
 }

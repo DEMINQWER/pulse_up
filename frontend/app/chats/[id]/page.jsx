@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { io } from "socket.io-client"
+
+const socket = io(process.env.NEXT_PUBLIC_API_URL)
 
 export default function ChatPage() {
   const { id } = useParams()
@@ -15,6 +18,8 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
 
+  /* ===== JWT ===== */
+
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) return
@@ -27,15 +32,40 @@ export default function ChatPage() {
     }
   }, [])
 
+  /* ===== LOAD DATA + SOCKET ===== */
+
   useEffect(() => {
     if (!id || !userId) return
+
     loadMessages()
     loadChatInfo()
+
+    socket.emit("joinChat", id)
+
+    socket.on("newMessage", (msg) => {
+      if (msg.chatId !== id) return
+
+      setMessages(prev => [
+        ...prev,
+        {
+          ...msg,
+          isMine: msg.user_id === userId
+        }
+      ])
+    })
+
+    return () => {
+      socket.off("newMessage")
+    }
   }, [id, userId])
+
+  /* ===== AUTO SCROLL ===== */
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  /* ===== LOAD CHAT INFO ===== */
 
   const loadChatInfo = async () => {
     const token = localStorage.getItem("token")
@@ -51,6 +81,8 @@ export default function ChatPage() {
     const data = await res.json()
     setChatName(data.other_username)
   }
+
+  /* ===== LOAD MESSAGES ===== */
 
   const loadMessages = async () => {
     setLoading(true)
@@ -80,6 +112,8 @@ export default function ChatPage() {
     setLoading(false)
   }
 
+  /* ===== SEND MESSAGE ===== */
+
   const sendMessage = async () => {
     if (!text.trim() || sending) return
 
@@ -106,10 +140,10 @@ export default function ChatPage() {
 
     const newMessage = await res.json()
 
-    setMessages(prev => [
-      ...prev,
-      { ...newMessage, isMine: true }
-    ])
+    socket.emit("sendMessage", {
+      ...newMessage,
+      chatId: id
+    })
 
     setText("")
     setSending(false)
