@@ -12,7 +12,6 @@ export default function SidebarProvider({ children }) {
       <Navbar open={open} setOpen={setOpen} />
       <Sidebar open={open} setOpen={setOpen} />
 
-      {/* Overlay */}
       {open && (
         <div
           className="overlay"
@@ -20,7 +19,8 @@ export default function SidebarProvider({ children }) {
         />
       )}
 
-      <div className="page-content">
+      {/* ВАЖНО — класс main-content, а не page-content */}
+      <div className="main-content">
         {children}
       </div>
     </>
