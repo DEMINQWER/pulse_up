@@ -1,25 +1,24 @@
-"use client";
-
-import { useEffect } from "react";
+import "./globals.css";
+import SidebarProvider from "@/components/SidebarProvider";
+import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
-import "../styles/globals.css";
+
+export const metadata = {
+  title: "Pulse",
+  description: "Messenger",
+};
 
 export default function RootLayout({ children }) {
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "pulse";
-    document.documentElement.setAttribute("data-theme", savedTheme);
-  }, []);
-
   return (
     <html lang="ru">
       <body>
-        <div className="app">
+        <SidebarProvider>
+          <Navbar />
           <Sidebar />
-          <main className="content">
+          <main className="main-content">
             {children}
           </main>
-        </div>
+        </SidebarProvider>
       </body>
     </html>
   );
