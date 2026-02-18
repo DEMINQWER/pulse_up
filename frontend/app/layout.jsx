@@ -1,4 +1,4 @@
-import "../styles/globals.css";
+import "./globals.css";
 import SidebarProvider from "@/components/SidebarProvider";
 
 export const metadata = {
