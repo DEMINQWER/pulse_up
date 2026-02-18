@@ -61,6 +61,19 @@ body {
 }
 
 /* ===================================================== */
+/* ===================== MAIN CONTENT ================== */
+/* ===================================================== */
+
+.main-content {
+  padding-top: 80px; /* компенсация fixed topbar */
+  padding-left: 20px;
+  padding-right: 20px;
+  min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ===================================================== */
 /* ====================== SIDEBAR ====================== */
 /* ===================================================== */
 
@@ -109,22 +122,22 @@ body {
 /* ===================================================== */
 
 .vk-chats {
-  max-width: 650px;
+  max-width: 700px;
   margin: 0 auto;
-  height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
 }
 
 .vk-header {
-  padding: 20px;
+  padding: 10px 0 20px 0;
   font-size: 22px;
   font-weight: 600;
 }
 
 .vk-chat-list {
-  flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .vk-chat-item {
@@ -132,13 +145,14 @@ body {
   align-items: center;
   padding: 14px 18px;
   border-radius: 16px;
-  margin-bottom: 6px;
   cursor: pointer;
   transition: 0.2s ease;
+  border: 1px solid transparent;
 }
 
 .vk-chat-item:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
   transform: translateX(4px);
 }
 
@@ -152,7 +166,7 @@ body {
   justify-content: center;
   font-weight: 600;
   margin-right: 14px;
-  box-shadow: 0 0 15px rgba(108,76,255,0.4);
+  box-shadow: 0 0 12px rgba(108,76,255,0.3);
 }
 
 .chat-name {
@@ -169,19 +183,16 @@ body {
 /* ===================================================== */
 
 .vk-chat-container {
-  height: calc(100vh - 70px);
+  max-width: 800px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  max-width: 750px;
-  margin: 0 auto;
 }
 
 .vk-chat-header {
-  padding: 14px 18px;
+  padding: 16px 0;
   font-weight: 600;
   border-bottom: 1px solid var(--border);
-  background: rgba(20,20,43,0.85);
-  backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -191,26 +202,24 @@ body {
   cursor: pointer;
   font-size: 18px;
   padding: 6px 10px;
-  border-radius: 10px;
+  border-radius: 8px;
   transition: 0.2s;
 }
 
 .back-btn:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05);
 }
 
 .vk-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
+  padding: 20px 0;
   display: flex;
   flex-direction: column;
 }
 
 .vk-message {
-  max-width: 75%;
+  max-width: 70%;
   padding: 10px 14px;
-  border-radius: 18px;
+  border-radius: 16px;
   margin-bottom: 10px;
   font-size: 14px;
   animation: fadeIn 0.2s ease;
@@ -219,7 +228,6 @@ body {
 .vk-message.mine {
   align-self: flex-end;
   background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  box-shadow: 0 0 15px rgba(108,76,255,0.3);
 }
 
 .vk-message.other {
@@ -235,10 +243,9 @@ body {
 
 .vk-input {
   display: flex;
-  padding: 12px;
   gap: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
-  background: rgba(20,20,43,0.9);
 }
 
 .vk-input input {

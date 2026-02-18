@@ -1,19 +1,26 @@
-import "./globals.css";
-import SidebarProvider from "@/components/SidebarProvider";
+import "./styles/globals.css"
 
 export const metadata = {
   title: "Pulse",
-  description: "Messenger",
-};
+  description: "Messenger App"
+}
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ru">
       <body>
-        <SidebarProvider>
+
+        {/* TOPBAR */}
+        <div className="topbar">
+          <div className="logo">PULSE</div>
+        </div>
+
+        {/* MAIN CONTENT */}
+        <div className="main-content">
           {children}
-        </SidebarProvider>
+        </div>
+
       </body>
     </html>
-  );
+  )
 }
