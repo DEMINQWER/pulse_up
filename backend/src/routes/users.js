@@ -66,10 +66,11 @@ router.put("/me", auth, async (req, res) => {
       return res.status(400).json({ error: "Username too short" });
     }
 
-    // Проверка уникальности username
+    const trimmedUsername = username.trim();
+
     const check = await pool.query(
       "SELECT id FROM users WHERE username = $1 AND id != $2",
-      [username, req.user.id]
+      [trimmedUsername, req.user.id]
     );
 
     if (check.rows.length > 0) {
@@ -84,7 +85,7 @@ router.put("/me", auth, async (req, res) => {
            phone=$4
        WHERE id=$5
        RETURNING id, username, email, nickname, birthdate, phone, role, avatar_url`,
-      [username.trim(), nickname, birthdate, phone, req.user.id]
+      [trimmedUsername, nickname, birthdate, phone, req.user.id]
     );
 
     res.json(result.rows[0]);
@@ -169,6 +170,31 @@ router.post("/avatar", auth, upload.single("avatar"), async (req, res) => {
   } catch (err) {
     console.error("UPLOAD AVATAR ERROR:", err);
     res.status(500).json({ error: "Upload failed" });
+  }
+});
+
+/* =========================
+   SAVE DEVICE TOKEN (для push)
+========================= */
+
+router.post("/device-token", auth, async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Token required" });
+    }
+
+    await pool.query(
+      "UPDATE users SET device_token = $1 WHERE id = $2",
+      [token, req.user.id]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("SAVE TOKEN ERROR:", err);
+    res.status(500).json({ error: "Failed to save token" });
   }
 });
 

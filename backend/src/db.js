@@ -47,6 +47,12 @@ async function initDB() {
       );
     `);
 
+    // 🔔 Добавляем колонку для PUSH (если её нет)
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS device_token TEXT;
+    `);
+
     await pool.query(`
       UPDATE users
       SET username = 'user' || id
@@ -103,7 +109,7 @@ async function initDB() {
       );
     `);
 
-    // 🔥 1. Если есть старая колонка text — переносим данные
+    // Если есть старая колонка text — переносим данные
     await pool.query(`
       DO $$
       BEGIN
@@ -121,7 +127,6 @@ async function initDB() {
       $$;
     `);
 
-    // 🔥 2. Гарантируем что content существует
     await pool.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS content TEXT;
@@ -158,7 +163,7 @@ async function initDB() {
       );
     `);
 
-    console.log("✅ Database fully synchronized");
+    console.log("✅ Database fully synchronized (PUSH ready)");
   } catch (err) {
     console.error("❌ DB INIT ERROR:", err);
     throw err;

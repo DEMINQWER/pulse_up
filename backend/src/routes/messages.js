@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
 const auth = require('../middleware/auth');
+const admin = require('../firebaseAdmin');
 
 /* =========================
    GET MESSAGES
@@ -15,7 +16,6 @@ router.get('/:chatId', auth, async (req, res) => {
       return res.status(400).json({ error: "Invalid chat id" });
     }
 
-    // Проверяем существование чата
     const chatExists = await pool.query(
       `SELECT id FROM chats WHERE id = $1`,
       [chatId]
@@ -25,7 +25,6 @@ router.get('/:chatId', auth, async (req, res) => {
       return res.status(404).json({ error: "Chat not found" });
     }
 
-    // Проверяем что пользователь участник
     const accessCheck = await pool.query(
       `SELECT 1 FROM chat_users WHERE chat_id = $1 AND user_id = $2`,
       [chatId, req.user.id]
@@ -56,7 +55,7 @@ router.get('/:chatId', auth, async (req, res) => {
 
 
 /* =========================
-   SEND MESSAGE
+   SEND MESSAGE + PUSH
 ========================= */
 
 router.post('/:chatId', auth, async (req, res) => {
@@ -72,7 +71,6 @@ router.post('/:chatId', auth, async (req, res) => {
       return res.status(400).json({ error: "Message content required" });
     }
 
-    // Проверяем существование чата
     const chatExists = await pool.query(
       `SELECT id FROM chats WHERE id = $1`,
       [chatId]
@@ -82,7 +80,6 @@ router.post('/:chatId', auth, async (req, res) => {
       return res.status(404).json({ error: "Chat not found" });
     }
 
-    // Проверяем участие пользователя
     const accessCheck = await pool.query(
       `SELECT 1 FROM chat_users WHERE chat_id = $1 AND user_id = $2`,
       [chatId, req.user.id]
@@ -92,6 +89,7 @@ router.post('/:chatId', auth, async (req, res) => {
       return res.status(403).json({ error: "Нет доступа к чату" });
     }
 
+    // 1️⃣ Сохраняем сообщение
     const result = await pool.query(
       `
       INSERT INTO messages (chat_id, user_id, content)
@@ -101,7 +99,37 @@ router.post('/:chatId', auth, async (req, res) => {
       [chatId, req.user.id, content.trim()]
     );
 
-    res.json(result.rows[0]);
+    const message = result.rows[0];
+
+    // 2️⃣ Получаем получателей
+    const usersResult = await pool.query(
+      `SELECT u.device_token
+       FROM chat_users cu
+       JOIN users u ON cu.user_id = u.id
+       WHERE cu.chat_id = $1
+       AND u.id != $2`,
+      [chatId, req.user.id]
+    );
+
+    const recipients = usersResult.rows;
+
+    // 3️⃣ Отправляем push
+    for (const user of recipients) {
+      if (user.device_token) {
+        await admin.messaging().send({
+          token: user.device_token,
+          notification: {
+            title: "📩 Новое сообщение",
+            body: content,
+          },
+          data: {
+            chatId: chatId.toString(),
+          },
+        });
+      }
+    }
+
+    res.json(message);
 
   } catch (err) {
     console.error("SEND MESSAGE ERROR:", err);

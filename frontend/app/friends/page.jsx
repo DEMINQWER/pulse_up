@@ -1,116 +1,94 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 
-export default function Friends() {
-  const [friends, setFriends] = useState([]);
-  const [search, setSearch] = useState("");
-  const [results, setResults] = useState([]);
-  const router = useRouter();
+export default function FriendsPage() {
+  const router = useRouter()
 
-  const API = process.env.NEXT_PUBLIC_API_URL;
+  const [friends, setFriends] = useState([])
+  const [search, setSearch] = useState("")
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    loadFriends()
+  }, [])
 
-    fetch(`${API}/friends`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(setFriends)
-      .catch(err => console.error("Load friends error:", err));
-  }, [API]);
+  const loadFriends = async () => {
+    const token = localStorage.getItem("token")
+    if (!token) return
 
-  const searchUser = async () => {
-    const token = localStorage.getItem("token");
-    if (!search || !token) return;
-
-    try {
-      const res = await fetch(
-        `${API}/users/search?username=${encodeURIComponent(search)}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      const data = await res.json();
-      setResults(data);
-    } catch (err) {
-      console.error("Search error:", err);
-    }
-  };
-
-  const startChat = async (userId) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-      const res = await fetch(
-        `${API}/chats/private/${userId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error("Chat create error:", data);
-        return;
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/friends`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
       }
+    )
 
-      if (data.chatId) {
-        router.push(`/chats/${data.chatId}`);
-      }
-
-    } catch (err) {
-      console.error("Start chat error:", err);
+    if (!res.ok) {
+      setLoading(false)
+      return
     }
-  };
+
+    const data = await res.json()
+    setFriends(data)
+    setLoading(false)
+  }
+
+  const filtered = friends.filter(friend =>
+    friend.username.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
-    <div className="page">
-      <h2>Друзья</h2>
+    <div className="pulse-container">
 
-      <div className="search-box">
+      <div className="pulse-header">
+        👥 Друзья
+      </div>
+
+      <div className="pulse-search">
         <input
           placeholder="Поиск по username..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button onClick={searchUser}>Поиск</button>
       </div>
 
-      {results.length > 0 && (
-        <div className="search-results">
-          {results.map((user) => (
-            <div key={user.id} className="user-card">
-              <span>@{user.username}</span>
-              <button onClick={() => startChat(user.id)}>
-                Написать
-              </button>
+      <div className="pulse-list">
+
+        {loading && <div className="empty">Загрузка...</div>}
+
+        {!loading && filtered.length === 0 && (
+          <div className="empty">Друзей пока нет</div>
+        )}
+
+        {filtered.map(friend => (
+          <div key={friend.id} className="pulse-card">
+
+            <div className="pulse-avatar">
+              {friend.username[0].toUpperCase()}
             </div>
-          ))}
-        </div>
-      )}
 
-      <hr />
+            <div className="pulse-info">
+              <div className="pulse-name">
+                {friend.username}
+              </div>
+              <div className="pulse-sub">
+                @{friend.username}
+              </div>
+            </div>
 
-      <div className="friends-list">
-        {friends.map((friend) => (
-          <div key={friend.id} className="friend-item">
-            <span>@{friend.username}</span>
-            <button onClick={() => startChat(friend.id)}>
-              Открыть чат
+            <button
+              className="pulse-btn"
+              onClick={() => router.push(`/chats/${friend.chat_id}`)}
+            >
+              Написать
             </button>
+
           </div>
         ))}
+
       </div>
     </div>
-  );
+  )
 }
