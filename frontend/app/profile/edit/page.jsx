@@ -1,153 +1,153 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api";
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { apiRequest } from "@/lib/api"
 
 export default function EditProfilePage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
   const [form, setForm] = useState({
     username: "",
     email: "",
     nickname: "",
-    phone: "",
-    birthdate: ""
-  });
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+    birthday: "",
+    phone: ""
+  })
 
   useEffect(() => {
-    loadProfile();
-  }, []);
+    loadProfile()
+  }, [])
 
   const loadProfile = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const data = await apiRequest(
-        "/users/me",
-        "GET",
-        null,
-        token
-      );
+      const token = localStorage.getItem("token")
+      const data = await apiRequest("/users/me", "GET", null, token)
 
       setForm({
         username: data.username || "",
         email: data.email || "",
         nickname: data.nickname || "",
-        phone: data.phone || "",
-        birthdate: data.birthdate
-          ? data.birthdate.split("T")[0]
-          : ""
-      });
+        birthday: data.birthday || "",
+        phone: data.phone || ""
+      })
 
-      setLoading(false);
-
+      setLoading(false)
     } catch (err) {
-      console.error("LOAD PROFILE ERROR:", err);
-      setLoading(false);
+      console.error(err)
+      setLoading(false)
     }
-  };
+  }
 
   const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value
-    });
-  };
+    })
+  }
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      setMessage("");
+    setSaving(true)
 
-      const token = localStorage.getItem("token");
+    try {
+      const token = localStorage.getItem("token")
 
       await apiRequest(
-        "/users/me",
+        "/users/update",
         "PUT",
-        {
-          username: form.username,
-          nickname: form.nickname,
-          phone: form.phone,
-          birthdate: form.birthdate || null
-        },
+        form,
         token
-      );
+      )
 
-      setMessage("Профиль успешно обновлён");
-      setSaving(false);
-
+      router.push("/profile")
     } catch (err) {
-      console.error("UPDATE ERROR:", err);
-      setMessage("Ошибка при обновлении");
-      setSaving(false);
+      console.error(err)
+      setSaving(false)
     }
-  };
+  }
 
   if (loading) {
-    return <div className="center">Загрузка...</div>;
+    return (
+      <div className="profile-wrapper">
+        <div className="profile-card glass">
+          Загрузка...
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="profile-wrapper">
-      <div className="profile-card">
+      <div className="profile-card glass edit-card">
 
-        <h2 style={{ marginBottom: "20px" }}>
-          Редактирование профиля
-        </h2>
+        <h2>✏ Редактирование профиля</h2>
 
-        <div className="edit-panel">
-
+        <div className="edit-group">
           <label>Username</label>
           <input
             name="username"
             value={form.username}
             onChange={handleChange}
           />
+        </div>
 
-          <label>Email (изменить нельзя)</label>
+        <div className="edit-group">
+          <label>Email</label>
           <input
+            name="email"
             value={form.email}
-            disabled
-            style={{ opacity: 0.6 }}
+            onChange={handleChange}
           />
+        </div>
 
-          <label>Никнейм</label>
+        <div className="edit-group">
+          <label>Nickname</label>
           <input
             name="nickname"
             value={form.nickname}
             onChange={handleChange}
           />
+        </div>
 
+        <div className="edit-group">
+          <label>Дата рождения</label>
+          <input
+            type="date"
+            name="birthday"
+            value={form.birthday}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="edit-group">
           <label>Телефон</label>
           <input
             name="phone"
             value={form.phone}
             onChange={handleChange}
           />
+        </div>
 
-          <label>Дата рождения</label>
-          <input
-            type="date"
-            name="birthdate"
-            value={form.birthdate}
-            onChange={handleChange}
-          />
-
-          <button onClick={handleSave} disabled={saving}>
-            {saving ? "Сохранение..." : "Сохранить изменения"}
+        <div className="edit-actions">
+          <button
+            className="btn-secondary"
+            onClick={() => router.back()}
+          >
+            Отмена
           </button>
 
-          {message && (
-            <div style={{ marginTop: 10, opacity: 0.8 }}>
-              {message}
-            </div>
-          )}
-
+          <button
+            className="btn-primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? "Сохранение..." : "Сохранить"}
+          </button>
         </div>
+
       </div>
     </div>
-  );
+  )
 }

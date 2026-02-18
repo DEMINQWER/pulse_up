@@ -385,3 +385,71 @@ body.sidebar-open .main-content {
 .profile-card button:hover {
   background: rgba(255,255,255,0.2);
 }
+
+/* ===== EDIT PROFILE ===== */
+
+.edit-card {
+  gap: 20px;
+}
+
+.edit-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-group label {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.edit-group input {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: white;
+  outline: none;
+  transition: 0.2s;
+}
+
+.edit-group input:focus {
+  border: 1px solid #4c6ef5;
+  background: rgba(255,255,255,0.08);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #4c6ef5;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #3b5bdb;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.2);
+}
