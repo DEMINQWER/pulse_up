@@ -23,7 +23,6 @@ html, body {
 /* ===================== THEME BASE ==================== */
 /* ===================================================== */
 
-/* Тема по умолчанию — ПУЛЬС */
 :root {
   --bg-main: #0f0f1a;
   --bg-secondary: #14142b;
@@ -37,370 +36,13 @@ html, body {
   --text-muted: #a1a1aa;
 }
 
-/* ===== ОКЕАН ===== */
-:root[data-theme="ocean"] {
-  --bg-main: #07121f;
-  --bg-secondary: #0c1f36;
-  --accent: #00c6ff;
-  --accent-hover: #0072ff;
-}
-
-/* ===== САПФИР ===== */
-:root[data-theme="sapphire"] {
-  --bg-main: #1a0f2e;
-  --bg-secondary: #24123a;
-  --accent: #c77dff;
-  --accent-hover: #9d4edd;
-}
-
-/* ===================================================== */
-/* ===================== BODY BG ======================= */
-/* ===================================================== */
-
 body {
   background: linear-gradient(135deg, var(--bg-main), var(--bg-secondary));
   color: var(--text-main);
 }
 
 /* ===================================================== */
-/* ===================== LAYOUT ======================== */
-/* ===================================================== */
-
-.app {
-  display: flex;
-  min-height: 100vh;
-}
-
-.content {
-  flex: 1;
-  padding: 30px;
-}
-
-.page {
-  max-width: 900px;
-}
-
-/* ===================================================== */
-/* ====================== SIDEBAR ====================== */
-/* ===================================================== */
-
-.sidebar {
-  width: 240px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar a {
-  display: block;
-  padding: 12px 14px;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  font-weight: 500;
-  transition: 0.25s ease;
-}
-
-.sidebar a:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-.sidebar a.active {
-  background: linear-gradient(
-    135deg,
-    rgba(108,76,255,0.25),
-    rgba(143,111,255,0.15)
-  );
-  border: 1px solid var(--accent);
-}
-
-.menu {
-  flex: 1;
-}
-
-.settings {
-  margin-top: auto;
-}
-
-/* ===================================================== */
-/* ====================== CARDS ======================== */
-/* ===================================================== */
-
-.card,
-.settings-list,
-.user-card,
-.friend-item,
-.chat-item,
-.profile-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 20px;
-  transition: 0.25s ease;
-}
-
-/* ===================================================== */
-/* ======================= INPUTS ====================== */
-/* ===================================================== */
-
-input,
-textarea {
-  width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 14px;
-  color: var(--text-main);
-  font-size: 14px;
-  outline: none;
-  transition: 0.25s ease;
-  margin-bottom: 12px;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--text-muted);
-}
-
-input:focus,
-textarea:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(108,76,255,0.25);
-}
-
-/* ===================================================== */
-/* ====================== BUTTONS ====================== */
-/* ===================================================== */
-
-button {
-  width: 100%;
-  padding: 12px;
-  border-radius: 14px;
-  border: none;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: white;
-  cursor: pointer;
-  transition: 0.2s ease;
-  margin-top: 10px;
-}
-
-button:hover {
-  transform: translateY(-2px);
-}
-
-button:active {
-  transform: scale(0.97);
-}
-
-.danger-btn {
-  background: var(--danger);
-}
-
-.cancel-btn {
-  background: rgba(255,255,255,0.1);
-}
-
-/* ===================================================== */
-/* ====================== PROFILE ====================== */
-/* ===================================================== */
-
-.profile-wrapper {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.profile-card {
-  width: 420px;
-}
-
-.profile-field {
-  padding: 14px 18px;
-  border-radius: 14px;
-  margin-bottom: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255,255,255,0.04);
-}
-
-.profile-field span {
-  font-size: 12px;
-  opacity: 0.6;
-}
-
-/* ===================================================== */
-/* ====================== SETTINGS ===================== */
-/* ===================================================== */
-
-.settings-item {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: background 0.25s ease;
-}
-
-.settings-item:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-.theme-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.active-theme {
-  background: var(--accent);
-  color: white;
-}
-
-/* ===================================================== */
-/* ==================== VK CHAT STYLE ================== */
-/* ===================================================== */
-
-.vk-chats {
-  max-width: 600px;
-  margin: 0 auto;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.vk-header {
-  padding: 20px;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.vk-chat-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.vk-chat-item {
-  display: flex;
-  align-items: center;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.vk-chat-item:hover {
-  background: rgba(255,255,255,0.05);
-}
-
-.avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  margin-right: 14px;
-}
-
-.chat-info {
-  flex: 1;
-}
-
-.chat-name {
-  font-weight: 500;
-}
-
-.chat-preview {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-/* ================= CHAT PAGE ================= */
-
-.vk-chat-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-.vk-chat-header {
-  padding: 18px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
-}
-
-.vk-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.vk-message {
-  max-width: 75%;
-  padding: 10px 14px;
-  border-radius: 16px;
-  margin-bottom: 10px;
-  word-wrap: break-word;
-  font-size: 14px;
-}
-
-.vk-message.mine {
-  align-self: flex-end;
-  background: var(--accent);
-}
-
-.vk-message.other {
-  align-self: flex-start;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-}
-
-.vk-input {
-  display: flex;
-  padding: 12px;
-  border-top: 1px solid var(--border);
-  background: var(--bg-secondary);
-}
-
-.vk-input input {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.vk-input button {
-  width: 50px;
-  margin-top: 0;
-}
-
-/* ================= MOBILE ================= */
-
-@media (max-width: 768px) {
-
-  .sidebar {
-    display: none;
-  }
-
-  .content {
-    padding: 0;
-  }
-
-  .vk-chats,
-  .vk-chat-container {
-    max-width: 100%;
-  }
-
-}
-
-/* ===================================================== */
-/* ====================== TOP BAR ====================== */
+/* ======================= TOP BAR ===================== */
 /* ===================================================== */
 
 .topbar {
@@ -463,14 +105,6 @@ button:active {
   font-weight: 600;
 }
 
-.sidebar-header button {
-  background: none;
-  border: none;
-  color: var(--text-main);
-  font-size: 18px;
-  cursor: pointer;
-}
-
 .sidebar a {
   display: block;
   padding: 12px 14px;
@@ -507,7 +141,129 @@ button:active {
 }
 
 /* ===================================================== */
-/* ====================== MOBILE FIX =================== */
+/* ==================== VK CHAT STYLE ================== */
+/* ===================================================== */
+
+.vk-chats {
+  max-width: 600px;
+  margin: 0 auto;
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+}
+
+.vk-header {
+  padding: 20px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.vk-chat-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.vk-chat-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.vk-chat-item:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-right: 14px;
+}
+
+.chat-info {
+  flex: 1;
+}
+
+.chat-name {
+  font-weight: 500;
+}
+
+.chat-preview {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ================= CHAT PAGE ================= */
+
+.vk-chat-container {
+  height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.vk-chat-header {
+  padding: 18px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.vk-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.vk-message {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.vk-message.mine {
+  align-self: flex-end;
+  background: var(--accent);
+}
+
+.vk-message.other {
+  align-self: flex-start;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.vk-input {
+  display: flex;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.vk-input input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.vk-input button {
+  width: 50px;
+  margin-top: 0;
+}
+
+/* ===================================================== */
+/* ====================== DESKTOP ====================== */
 /* ===================================================== */
 
 @media (min-width: 1024px) {
