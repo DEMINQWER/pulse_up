@@ -103,7 +103,25 @@ async function initDB() {
       );
     `);
 
-    // 🔥 Гарантируем что колонка content существует
+    // 🔥 1. Если есть старая колонка text — переносим данные
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='messages' AND column_name='text'
+        ) THEN
+          UPDATE messages
+          SET content = text
+          WHERE content IS NULL;
+
+          ALTER TABLE messages DROP COLUMN text;
+        END IF;
+      END
+      $$;
+    `);
+
+    // 🔥 2. Гарантируем что content существует
     await pool.query(`
       ALTER TABLE messages
       ADD COLUMN IF NOT EXISTS content TEXT;
@@ -140,7 +158,7 @@ async function initDB() {
       );
     `);
 
-    console.log("✅ Database ready");
+    console.log("✅ Database fully synchronized");
   } catch (err) {
     console.error("❌ DB INIT ERROR:", err);
     throw err;
