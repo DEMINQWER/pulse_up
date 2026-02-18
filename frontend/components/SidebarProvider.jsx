@@ -12,10 +12,15 @@ export default function SidebarProvider({ children }) {
       <Navbar open={open} setOpen={setOpen} />
       <Sidebar open={open} setOpen={setOpen} />
 
-      <div
-        className="page-content"
-        onClick={() => open && setOpen(false)}
-      >
+      {/* Overlay */}
+      {open && (
+        <div
+          className="overlay"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      <div className="page-content">
         {children}
       </div>
     </>
