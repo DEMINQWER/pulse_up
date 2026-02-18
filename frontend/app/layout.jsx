@@ -1,4 +1,5 @@
 import "./globals.css"
+import Sidebar from "./Sidebar"
 
 export const metadata = {
   title: "Pulse",
@@ -10,10 +11,8 @@ export default function RootLayout({ children }) {
     <html lang="ru">
       <body>
 
-        {/* TOPBAR */}
-        <div className="topbar">
-          <div className="logo">PULSE</div>
-        </div>
+        {/* SIDEBAR + TOPBAR */}
+        <Sidebar />
 
         {/* MAIN CONTENT */}
         <div className="main-content">

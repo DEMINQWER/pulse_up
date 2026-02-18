@@ -310,3 +310,23 @@ body {
   background: rgba(0,0,0,0.5);
   z-index: 1050;
 }
+
+/* ===================================================== */
+/* =============== SIDEBAR LAYOUT FIX ================== */
+/* ===================================================== */
+
+/* Чтобы контент не уезжал под sidebar */
+body.sidebar-open .main-content {
+  margin-left: 240px;
+  transition: margin-left 0.3s ease;
+}
+
+/* Когда sidebar закрыт — без отступа */
+.main-content {
+  transition: margin-left 0.3s ease;
+}
+
+/* Чтобы overlay не перекрывал sidebar */
+.overlay {
+  backdrop-filter: blur(2px);
+}
