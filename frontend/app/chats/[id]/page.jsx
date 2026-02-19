@@ -131,7 +131,7 @@ export default function ChatPage() {
   const isOnline = onlineUsers.includes(otherUserId)
 
   return (
-    <div className="chat-page">
+    <div className="chat-page-layout">
 
       {/* FIXED CHAT HEADER */}
       <div className="chat-header-fixed">
@@ -167,7 +167,7 @@ export default function ChatPage() {
       </div>
 
       {/* INPUT */}
-      <div className="chat-input-fixed">
+      <div className="chat-input">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
