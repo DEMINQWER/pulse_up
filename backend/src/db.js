@@ -43,14 +43,9 @@ async function initDB() {
         role TEXT DEFAULT 'user',
         is_banned BOOLEAN DEFAULT false,
         ban_reason TEXT,
+        device_token TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-    `);
-
-    // 🔔 Добавляем колонку для PUSH (если её нет)
-    await pool.query(`
-      ALTER TABLE users
-      ADD COLUMN IF NOT EXISTS device_token TEXT;
     `);
 
     await pool.query(`
@@ -105,8 +100,15 @@ async function initDB() {
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         content TEXT,
         file_url TEXT,
+        status TEXT DEFAULT 'sent', -- ⭐ ВАЖНО: статус сообщения
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Безопасно добавляем status если таблица уже существовала
+    await pool.query(`
+      ALTER TABLE messages
+      ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'sent';
     `);
 
     // Если есть старая колонка text — переносим данные
@@ -125,16 +127,6 @@ async function initDB() {
         END IF;
       END
       $$;
-    `);
-
-    await pool.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS content TEXT;
-    `);
-
-    await pool.query(`
-      ALTER TABLE messages
-      ADD COLUMN IF NOT EXISTS file_url TEXT;
     `);
 
     /* ========= REPORTS ========= */
@@ -163,7 +155,7 @@ async function initDB() {
       );
     `);
 
-    console.log("✅ Database fully synchronized (PUSH ready)");
+    console.log("✅ Database fully synchronized (STATUS READY ⭐)");
   } catch (err) {
     console.error("❌ DB INIT ERROR:", err);
     throw err;
