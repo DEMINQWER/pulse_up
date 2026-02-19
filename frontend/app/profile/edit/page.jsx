@@ -13,7 +13,7 @@ export default function EditProfilePage() {
     username: "",
     email: "",
     nickname: "",
-    birthday: "",
+    birthdate: "",
     phone: ""
   })
 
@@ -30,7 +30,7 @@ export default function EditProfilePage() {
         username: data.username || "",
         email: data.email || "",
         nickname: data.nickname || "",
-        birthday: data.birthday || "",
+        birthdate: data.birthdate || "",
         phone: data.phone || ""
       })
 
@@ -115,8 +115,8 @@ export default function EditProfilePage() {
           <label>Дата рождения</label>
           <input
             type="date"
-            name="birthday"
-            value={form.birthday}
+            name="birthdate"
+            value={form.birthdate}
             onChange={handleChange}
           />
         </div>
