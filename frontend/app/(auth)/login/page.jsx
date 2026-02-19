@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { login } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push("/chats");
+      router.replace("/chats");
     } catch (err) {
       setError("Ошибка входа");
     }
@@ -31,7 +32,7 @@ export default function LoginPage() {
         {error && <p style={styles.error}>{error}</p>}
 
         <input
-          type="text"
+          type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -51,6 +52,13 @@ export default function LoginPage() {
         <button type="submit" style={styles.button}>
           Войти
         </button>
+
+        <p style={styles.switchText}>
+          Нет аккаунта?{" "}
+          <Link href="/register" style={styles.link}>
+            Зарегистрироваться
+          </Link>
+        </p>
       </form>
     </div>
   );
@@ -110,5 +118,18 @@ const styles = {
     color: "#ff4d4f",
     textAlign: "center",
     fontSize: "14px",
+  },
+
+  switchText: {
+    textAlign: "center",
+    marginTop: "10px",
+    fontSize: "14px",
+    color: "#ccc",
+  },
+
+  link: {
+    color: "#1cc88a",
+    textDecoration: "none",
+    fontWeight: "bold",
   },
 };

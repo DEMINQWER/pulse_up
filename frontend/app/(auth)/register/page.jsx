@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { register } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function RegisterPage() {
 
     try {
       await register(email, password);
-      router.push("/feed");
+      router.replace("/chats"); // исправлено
     } catch (err) {
       setError("Ошибка регистрации");
     }
@@ -37,7 +38,7 @@ export default function RegisterPage() {
         {error && <p style={styles.error}>{error}</p>}
 
         <input
-          type="text"
+          type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -66,6 +67,13 @@ export default function RegisterPage() {
         <button type="submit" style={styles.button}>
           Зарегистрироваться
         </button>
+
+        <p style={styles.switchText}>
+          Уже зарегистрированы?{" "}
+          <Link href="/login" style={styles.link}>
+            Войти
+          </Link>
+        </p>
       </form>
     </div>
   );
@@ -125,5 +133,18 @@ const styles = {
     color: "#ff4d4f",
     textAlign: "center",
     fontSize: "14px",
+  },
+
+  switchText: {
+    textAlign: "center",
+    marginTop: "10px",
+    fontSize: "14px",
+    color: "#ccc",
+  },
+
+  link: {
+    color: "#4e73df",
+    textDecoration: "none",
+    fontWeight: "bold",
   },
 };
