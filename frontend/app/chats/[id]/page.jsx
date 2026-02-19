@@ -17,6 +17,7 @@ export default function ChatPage() {
   const [chatName, setChatName] = useState("")
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [onlineUsers, setOnlineUsers] = useState([])
 
   /* ===== JWT ===== */
 
@@ -27,6 +28,8 @@ export default function ChatPage() {
     try {
       const decoded = JSON.parse(atob(token.split(".")[1]))
       setUserId(decoded.id)
+
+      socket.emit("join", decoded.id)
     } catch (err) {
       console.error("JWT decode error", err)
     }
@@ -42,8 +45,10 @@ export default function ChatPage() {
 
     socket.emit("joinChat", id)
 
+    /* === NEW MESSAGE === */
+
     socket.on("newMessage", (msg) => {
-      if (msg.chatId !== id) return
+      if (String(msg.chat_id) !== String(id)) return
 
       setMessages(prev => [
         ...prev,
@@ -54,8 +59,49 @@ export default function ChatPage() {
       ])
     })
 
+    /* === DELIVERED === */
+
+    socket.on("messageDelivered", ({ messageId }) => {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === messageId
+            ? { ...m, status: "delivered" }
+            : m
+        )
+      )
+    })
+
+    /* === READ === */
+
+    socket.on("messagesRead", () => {
+      setMessages(prev =>
+        prev.map(m =>
+          m.isMine ? { ...m, status: "read" } : m
+        )
+      )
+    })
+
+    /* === ONLINE === */
+
+    socket.on("userOnline", (uid) => {
+      setOnlineUsers(prev => [...new Set([...prev, uid])])
+    })
+
+    socket.on("userOffline", (uid) => {
+      setOnlineUsers(prev =>
+        prev.filter(id => id !== uid)
+      )
+    })
+
+    /* === MARK READ === */
+
+    socket.emit("messageRead", {
+      chatId: id,
+      userId
+    })
+
     return () => {
-      socket.off("newMessage")
+      socket.off()
     }
   }, [id, userId])
 
@@ -103,9 +149,9 @@ export default function ChatPage() {
 
     const data = await res.json()
 
-    const formatted = data.map((msg) => ({
+    const formatted = data.map(msg => ({
       ...msg,
-      isMine: msg.user_id === userId,
+      isMine: msg.user_id === userId
     }))
 
     setMessages(formatted)
@@ -142,11 +188,21 @@ export default function ChatPage() {
 
     socket.emit("sendMessage", {
       ...newMessage,
-      chatId: id
+      chatId: id,
+      senderId: userId
     })
 
     setText("")
     setSending(false)
+  }
+
+  /* ===== STATUS RENDER ===== */
+
+  const renderStatus = (status) => {
+    if (status === "sent") return "⭐"
+    if (status === "delivered") return "⭐⭐"
+    if (status === "read") return "⭐⭐⭐"
+    return ""
   }
 
   return (
@@ -156,7 +212,20 @@ export default function ChatPage() {
         <div className="back-btn" onClick={() => router.back()}>
           ←
         </div>
-        {chatName || "Загрузка..."}
+
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {chatName || "Загрузка..."}
+          {onlineUsers.length > 0 && (
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "lime"
+              }}
+            />
+          )}
+        </div>
       </div>
 
       <div className="vk-messages">
@@ -173,7 +242,13 @@ export default function ChatPage() {
             key={msg.id}
             className={`vk-message ${msg.isMine ? "mine" : "other"}`}
           >
-            {msg.content}
+            <div>{msg.content}</div>
+
+            {msg.isMine && (
+              <div style={{ fontSize: 12, opacity: 0.7 }}>
+                {renderStatus(msg.status)}
+              </div>
+            )}
           </div>
         ))}
 
