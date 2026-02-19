@@ -15,8 +15,8 @@ export default function ChatPage() {
   const [text, setText] = useState("")
   const [userId, setUserId] = useState(null)
   const [chatName, setChatName] = useState("")
+  const [otherUserId, setOtherUserId] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
   const [onlineUsers, setOnlineUsers] = useState([])
 
   /* ===== JWT ===== */
@@ -25,17 +25,12 @@ export default function ChatPage() {
     const token = localStorage.getItem("token")
     if (!token) return
 
-    try {
-      const decoded = JSON.parse(atob(token.split(".")[1]))
-      setUserId(decoded.id)
-
-      socket.emit("join", decoded.id)
-    } catch (err) {
-      console.error("JWT decode error", err)
-    }
+    const decoded = JSON.parse(atob(token.split(".")[1]))
+    setUserId(decoded.id)
+    socket.emit("join", decoded.id)
   }, [])
 
-  /* ===== LOAD DATA + SOCKET ===== */
+  /* ===== LOAD DATA ===== */
 
   useEffect(() => {
     if (!id || !userId) return
@@ -45,125 +40,69 @@ export default function ChatPage() {
 
     socket.emit("joinChat", id)
 
-    /* === NEW MESSAGE === */
-
     socket.on("newMessage", (msg) => {
       if (String(msg.chat_id) !== String(id)) return
 
       setMessages(prev => [
         ...prev,
-        {
-          ...msg,
-          isMine: msg.user_id === userId
-        }
+        { ...msg, isMine: msg.user_id === userId }
       ])
     })
 
-    /* === DELIVERED === */
-
-    socket.on("messageDelivered", ({ messageId }) => {
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === messageId
-            ? { ...m, status: "delivered" }
-            : m
-        )
-      )
-    })
-
-    /* === READ === */
-
-    socket.on("messagesRead", () => {
-      setMessages(prev =>
-        prev.map(m =>
-          m.isMine ? { ...m, status: "read" } : m
-        )
-      )
-    })
-
-    /* === ONLINE === */
-
-    socket.on("userOnline", (uid) => {
+    socket.on("userOnline", uid => {
       setOnlineUsers(prev => [...new Set([...prev, uid])])
     })
 
-    socket.on("userOffline", (uid) => {
-      setOnlineUsers(prev =>
-        prev.filter(id => id !== uid)
-      )
+    socket.on("userOffline", uid => {
+      setOnlineUsers(prev => prev.filter(id => id !== uid))
     })
 
-    /* === MARK READ === */
-
-    socket.emit("messageRead", {
-      chatId: id,
-      userId
-    })
-
-    return () => {
-      socket.off()
-    }
+    return () => socket.off()
   }, [id, userId])
-
-  /* ===== AUTO SCROLL ===== */
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
 
   /* ===== LOAD CHAT INFO ===== */
 
   const loadChatInfo = async () => {
     const token = localStorage.getItem("token")
-    if (!token) return
 
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/chats/${id}`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
 
-    if (!res.ok) return
-
     const data = await res.json()
+
     setChatName(data.other_username)
+    setOtherUserId(data.other_user_id)
   }
 
   /* ===== LOAD MESSAGES ===== */
 
   const loadMessages = async () => {
     setLoading(true)
-
     const token = localStorage.getItem("token")
-    if (!token) return
 
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/messages/${id}`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
 
-    if (!res.ok) {
-      setMessages([])
-      setLoading(false)
-      return
-    }
-
     const data = await res.json()
 
-    const formatted = data.map(msg => ({
-      ...msg,
-      isMine: msg.user_id === userId
-    }))
+    setMessages(
+      data.map(m => ({
+        ...m,
+        isMine: m.user_id === userId
+      }))
+    )
 
-    setMessages(formatted)
     setLoading(false)
   }
 
-  /* ===== SEND MESSAGE ===== */
+  /* ===== SEND ===== */
 
   const sendMessage = async () => {
-    if (!text.trim() || sending) return
-
-    setSending(true)
+    if (!text.trim()) return
 
     const token = localStorage.getItem("token")
 
@@ -179,93 +118,63 @@ export default function ChatPage() {
       }
     )
 
-    if (!res.ok) {
-      setSending(false)
-      return
-    }
-
     const newMessage = await res.json()
 
     socket.emit("sendMessage", {
       ...newMessage,
-      chatId: id,
-      senderId: userId
+      chatId: id
     })
 
     setText("")
-    setSending(false)
   }
 
-  /* ===== STATUS RENDER ===== */
-
-  const renderStatus = (status) => {
-    if (status === "sent") return "⭐"
-    if (status === "delivered") return "⭐⭐"
-    if (status === "read") return "⭐⭐⭐"
-    return ""
-  }
+  const isOnline = onlineUsers.includes(otherUserId)
 
   return (
-    <div className="vk-chat-container">
+    <div className="chat-page">
 
-      <div className="vk-chat-header">
-        <div className="back-btn" onClick={() => router.back()}>
+      {/* FIXED CHAT HEADER */}
+      <div className="chat-header-fixed">
+        <div className="chat-back" onClick={() => router.push("/chats")}>
           ←
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {chatName || "Загрузка..."}
-          {onlineUsers.length > 0 && (
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: "lime"
-              }}
-            />
-          )}
+        <div className="chat-user-block">
+          <div className="chat-user-name">
+            {chatName}
+          </div>
+
+          <div className="chat-user-status">
+            {isOnline ? "в сети" : "не в сети"}
+          </div>
         </div>
       </div>
 
-      <div className="vk-messages">
-        {loading && <div style={{ opacity: 0.6 }}>Загрузка...</div>}
-
-        {!loading && messages.length === 0 && (
-          <div style={{ opacity: 0.6 }}>
-            Сообщений пока нет
-          </div>
-        )}
+      {/* MESSAGES */}
+      <div className="chat-messages">
+        {loading && <div>Загрузка...</div>}
 
         {messages.map(msg => (
           <div
             key={msg.id}
-            className={`vk-message ${msg.isMine ? "mine" : "other"}`}
+            className={`chat-bubble ${msg.isMine ? "mine" : "other"}`}
           >
-            <div>{msg.content}</div>
-
-            {msg.isMine && (
-              <div style={{ fontSize: 12, opacity: 0.7 }}>
-                {renderStatus(msg.status)}
-              </div>
-            )}
+            {msg.content}
           </div>
         ))}
 
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="vk-input">
+      {/* INPUT */}
+      <div className="chat-input-fixed">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Сообщение..."
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-
-        <button onClick={sendMessage} disabled={sending}>
-          ➤
-        </button>
+        <button onClick={sendMessage}>➤</button>
       </div>
 
     </div>

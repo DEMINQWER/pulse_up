@@ -1,51 +1,29 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState("default");
+  const [theme, setTheme] = useState("pulse")
 
-  // 🔥 При загрузке страницы применяем сохранённую тему
   useEffect(() => {
-    const savedTheme = localStorage.getItem("pulse_theme");
-
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute("data-theme", savedTheme);
-    } else {
-      document.documentElement.setAttribute("data-theme", "default");
+    const saved = localStorage.getItem("pulse_theme")
+    if (saved) {
+      setTheme(saved)
+      document.documentElement.setAttribute("data-theme", saved)
     }
-  }, []);
+  }, [])
 
-  // 🔥 Смена темы
-  const changeTheme = (newTheme) => {
-    setTheme(newTheme);
-    localStorage.setItem("pulse_theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-  };
+  const changeTheme = (t) => {
+    setTheme(t)
+    localStorage.setItem("pulse_theme", t)
+    document.documentElement.setAttribute("data-theme", t)
+  }
 
   return (
-    <div style={{ display: "flex", gap: "10px" }}>
-      <button
-        onClick={() => changeTheme("default")}
-        className={theme === "default" ? "active-theme" : ""}
-      >
-        Default
-      </button>
-
-      <button
-        onClick={() => changeTheme("ocean")}
-        className={theme === "ocean" ? "active-theme" : ""}
-      >
-        Ocean
-      </button>
-
-      <button
-        onClick={() => changeTheme("dark")}
-        className={theme === "dark" ? "active-theme" : ""}
-      >
-        Dark
-      </button>
+    <div style={{ display: "flex", gap: 10 }}>
+      <button onClick={() => changeTheme("pulse")}>Pulse</button>
+      <button onClick={() => changeTheme("sup")}>Sup</button>
+      <button onClick={() => changeTheme("ocean")}>Ocean</button>
     </div>
-  );
+  )
 }
