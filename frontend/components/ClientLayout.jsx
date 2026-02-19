@@ -16,18 +16,25 @@ export default function ClientLayout({ children }) {
 
   return (
     <>
-      <div className="topbar">
-        <button className="burger" onClick={() => setOpen(true)}>
-          ☰
-        </button>
-        <div className="logo">PULSE</div>
-      </div>
+  {open && (
+    <div
+      className="sidebar-overlay"
+      onClick={() => setOpen(false)}
+    />
+  )}
 
-      <Sidebar open={open} setOpen={setOpen} />
+  <div className="topbar">
+    <button className="burger" onClick={() => setOpen(true)}>
+      ☰
+    </button>
+    <div className="logo">PULSE</div>
+  </div>
 
-      <div className="main-content">
-        {children}
-      </div>
-    </>
+  <Sidebar open={open} setOpen={setOpen} />
+
+  <div className="main-content">
+    {children}
+  </div>
+</>
   );
 }

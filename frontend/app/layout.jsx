@@ -10,6 +10,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ru" data-theme="pulse">
       <body>
+        {/* Звёздный фон */}
+        <div className="stars"></div>
+
         <ClientLayout>
           {children}
         </ClientLayout>
