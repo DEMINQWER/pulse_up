@@ -17,7 +17,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push("/feed");
+      router.push("/chats");
     } catch (err) {
       setError("Ошибка входа");
     }
