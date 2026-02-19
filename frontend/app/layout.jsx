@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="ru">
+    <html lang="ru" data-theme="pulse">
       <body>
         <ClientLayout>
           {children}

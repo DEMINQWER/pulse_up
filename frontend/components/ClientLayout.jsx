@@ -16,7 +16,6 @@ export default function ClientLayout({ children }) {
 
   return (
     <>
-      {/* FIXED TOPBAR */}
       <div className="topbar">
         <button className="burger" onClick={() => setOpen(true)}>
           ☰
@@ -26,7 +25,6 @@ export default function ClientLayout({ children }) {
 
       <Sidebar open={open} setOpen={setOpen} />
 
-      {/* PAGE CONTENT */}
       <div className="main-content">
         {children}
       </div>
