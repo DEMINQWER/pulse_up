@@ -55,7 +55,7 @@ export default function EditProfilePage() {
       const token = localStorage.getItem("token")
 
       await apiRequest(
-        "/users/update",
+        "/users/me",
         "PUT",
         form,
         token
