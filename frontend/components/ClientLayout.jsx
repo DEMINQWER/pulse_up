@@ -33,8 +33,10 @@ export default function ClientLayout({ children }) {
   <Sidebar open={open} setOpen={setOpen} />
 
   <div className="main-content">
+  <div className="page-wrapper">
     {children}
   </div>
+</div>
 </>
   );
 }

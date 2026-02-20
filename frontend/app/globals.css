@@ -281,3 +281,8 @@ body {
   position: relative;
   z-index: 2;
 }
+
+/* Контент отступает от navbar */
+.page-wrapper {
+  padding-top: 60px;
+}
