@@ -113,6 +113,16 @@ body {
   margin: 0 auto;
 }
 
+/* Убираем отступ только в чате */
+.chat-page-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 60px);
+  max-width: 800px;
+  margin: 0 auto;
+  margin-top: -60px;
+}
+
 /* ===================================================== */
 /* ====================== SIDEBAR ====================== */
 /* ===================================================== */
