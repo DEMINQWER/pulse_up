@@ -132,13 +132,19 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: 0.3s;
+  transition: transform 0.3s ease;
   z-index: 1100;
   border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+}
+
+.sidebar.open {
+  transform: translateX(0);
 }
 
 .menu a,
 .settings a {
+  display: block;
   padding: 12px 14px;
   border-radius: 10px;
   color: var(--text-main);
@@ -154,6 +160,38 @@ body {
   background: var(--bg-card);
 }
 
+/* ===== SIDEBAR HEADER ===== */
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.sidebar-logo {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+/* ===== OVERLAY ===== */
+
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1050;
+}
+
 /* ===================================================== */
 /* ====================== CHAT PAGE ==================== */
 /* ===================================================== */
@@ -165,8 +203,6 @@ body {
   max-width: 800px;
   margin: 0 auto;
 }
-
-/* ===== HEADER FIXED ===== */
 
 .chat-header-fixed {
   padding: 14px 16px;
@@ -196,8 +232,6 @@ body {
   color: var(--text-muted);
 }
 
-/* ===== MESSAGES SCROLL ===== */
-
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -205,8 +239,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-/* ===== BUBBLES ===== */
 
 .chat-bubble {
   max-width: 70%;
@@ -231,8 +263,6 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border);
 }
-
-/* ===== INPUT FIXED (FLEX VERSION) ===== */
 
 .chat-input {
   padding: 12px;
@@ -270,6 +300,8 @@ body {
   transform: scale(1.05);
 }
 
+/* ===== STARS LAYER ===== */
+
 .stars {
   position: fixed;
   inset: 0;
@@ -282,44 +314,4 @@ body {
 .main-content {
   position: relative;
   z-index: 2;
-}
-
-.sidebar {
-  transform: translateX(-100%);
-}
-
-.sidebar.open {
-  transform: translateX(0);
-}
-
-/* ===== SIDEBAR HEADER ===== */
-
-.sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.sidebar-logo {
-  font-weight: 600;
-  font-size: 18px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: var(--text-main);
-  cursor: pointer;
-}
-
-/* ===== OVERLAY ===== */
-
-.sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(4px);
-  z-index: 1050;
 }
