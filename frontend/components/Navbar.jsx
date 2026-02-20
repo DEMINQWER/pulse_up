@@ -1,16 +1,12 @@
-"use client";
+"use client"
 
-export default function Navbar({ open, setOpen }) {
+export default function Navbar({ onMenuClick }) {
   return (
-    <div className="topbar">
-      <button
-        className="menu-btn"
-        onClick={() => setOpen(!open)}
-      >
+    <div className="navbar">
+      <button onClick={onMenuClick} style={{marginRight: 15}}>
         ☰
       </button>
-
-      <div className="logo">PULSE</div>
+      <div style={{fontWeight: 600}}>PULSE</div>
     </div>
-  );
+  )
 }
