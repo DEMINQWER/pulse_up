@@ -15,8 +15,12 @@ a {
 }
 
 html, body {
-  min-height: 100vh;
+  height: 100%;
   transition: background 0.4s ease, color 0.3s ease;
+}
+
+body {
+  overflow-x: hidden;
 }
 
 /* ===================================================== */
@@ -35,7 +39,6 @@ html, body {
   --text-muted: #a1a1aa;
 }
 
-/* ===== PULSE ===== */
 [data-theme="pulse"] {
   --bg-main: #0f0f1a;
   --bg-secondary: #14142b;
@@ -43,7 +46,6 @@ html, body {
   --accent-hover: #8f6fff;
 }
 
-/* ===== OCEAN ===== */
 [data-theme="ocean"] {
   --bg-main: #0b1f2a;
   --bg-secondary: #102c3b;
@@ -51,7 +53,6 @@ html, body {
   --accent-hover: #48cae4;
 }
 
-/* ===== SUP (светлая) ===== */
 [data-theme="sup"] {
   --bg-main: #f4f4f5;
   --bg-secondary: #ffffff;
@@ -65,11 +66,7 @@ html, body {
 }
 
 body {
-  background: linear-gradient(
-    135deg,
-    var(--bg-main),
-    var(--bg-secondary)
-  );
+  background: linear-gradient(135deg, var(--bg-main), var(--bg-secondary));
   color: var(--text-main);
 }
 
@@ -112,7 +109,6 @@ body {
 
 .main-content {
   padding-top: 60px;
-  min-height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -126,14 +122,14 @@ body {
   top: 0;
   left: 0;
   width: 260px;
-  height: 100vh;
+  height: 100dvh;
   background: var(--bg-secondary);
   padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   transition: transform 0.3s ease;
-  z-index: 1100;
+  z-index: 1200;
   border-right: 1px solid var(--border);
   transform: translateX(-100%);
 }
@@ -159,8 +155,6 @@ body {
 .active {
   background: var(--bg-card);
 }
-
-/* ===== SIDEBAR HEADER ===== */
 
 .sidebar-header {
   display: flex;
@@ -189,7 +183,7 @@ body {
   inset: 0;
   background: rgba(0,0,0,0.5);
   backdrop-filter: blur(4px);
-  z-index: 1050;
+  z-index: 1100;
 }
 
 /* ===================================================== */
@@ -197,9 +191,9 @@ body {
 /* ===================================================== */
 
 .chat-page-layout {
-  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
+  height: calc(100dvh - 60px);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -211,25 +205,6 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.chat-back {
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.chat-user-block {
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-user-name {
-  font-weight: 600;
-}
-
-.chat-user-status {
-  font-size: 13px;
-  color: var(--text-muted);
 }
 
 .chat-messages {
@@ -250,11 +225,7 @@ body {
 
 .chat-bubble.mine {
   align-self: flex-end;
-  background: linear-gradient(
-    135deg,
-    var(--accent),
-    var(--accent-hover)
-  );
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
 }
 
@@ -286,11 +257,7 @@ body {
   width: 50px;
   border-radius: 14px;
   border: none;
-  background: linear-gradient(
-    135deg,
-    var(--accent),
-    var(--accent-hover)
-  );
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: white;
   cursor: pointer;
   transition: 0.2s;
@@ -310,7 +277,6 @@ body {
 }
 
 .topbar,
-.sidebar,
 .main-content {
   position: relative;
   z-index: 2;
