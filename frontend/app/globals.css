@@ -81,10 +81,9 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 900px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100%;
 }
-
 /* HEADER */
 .chat-header {
   height: 60px;
@@ -148,4 +147,18 @@ body {
   margin-left: 10px;
   background: #6c4cff;
   cursor: pointer;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  color: white;
+  transition: 0.2s;
+}
+
+.sidebar a:hover {
+  background: rgba(255,255,255,0.08);
 }
