@@ -1,42 +1,27 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
+import { useState, useEffect } from "react"
+import Navbar from "./Navbar"
 
 export default function ClientLayout({ children }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
-    if (open) {
-      document.body.classList.add("sidebar-open");
-    } else {
-      document.body.classList.remove("sidebar-open");
+    const saved = localStorage.getItem("theme")
+    if (saved) {
+      document.documentElement.setAttribute("data-theme", saved)
     }
-  }, [open]);
+  }, [])
 
   return (
     <>
-  {open && (
-    <div
-      className="sidebar-overlay"
-      onClick={() => setOpen(false)}
-    />
-  )}
+      <Navbar open={open} setOpen={setOpen} />
 
-  <div className="topbar">
-    <button className="burger" onClick={() => setOpen(true)}>
-      ☰
-    </button>
-    <div className="logo">PULSE</div>
-  </div>
+      {open && <div className="overlay" onClick={() => setOpen(false)} />}
 
-  <Sidebar open={open} setOpen={setOpen} />
-
-  <div className="main-content">
-  <div className="page-wrapper">
-    {children}
-  </div>
-</div>
-</>
-  );
+      <div className="page-content">
+        {children}
+      </div>
+    </>
+  )
 }
